@@ -95,7 +95,11 @@ def virtual_potential_temperature(temperature, humidity, z):
 
     theta_v = T * (1 + 0.61 q) + g / cp * z
 
-    Source: Stull (1988), An Introduction to Boundary Layer Meteorology, ch. 1.
+    Source: Stull (1988), An Introduction to Boundary Layer Meteorology,
+    sec. 1.5.1, eq. (1.5.1b): theta_v = theta * (1 + 0.61 r). Approximations:
+    theta = T + g / cp * z (dry adiabatic), specific humidity q instead of
+    mixing ratio r, and the humidity term applied to T instead of theta
+    (less than 0.01 K at 50 m).
     """
     return temperature * (1 + 0.61 * humidity) + GRAVITY / CP_AIR * z
 
@@ -113,7 +117,8 @@ def bulk_richardson(data, z=50):
     over salt water) at the sea surface temperature. The pressure is found
     from the air density at height z.
 
-    Source: Stull (1988), An Introduction to Boundary Layer Meteorology, sec. 5.6.
+    Source: Stull (1988), An Introduction to Boundary Layer Meteorology,
+    sec. 5.6.3, eq. (5.6.3), with the wind at the surface set to zero.
     """
     sst = data["sea_surface_temperature"]
     t_z = value_at_height(data, z, "air_temperature")
