@@ -99,7 +99,7 @@ def repair_downtime(data, repair_hours=12, hs_limit=2.0):
     return downtime, repair_end
 
 
-def weather_maintenance_loss(data, turbine=None, failures_per_year=6, repair_hours=12, hs_limit=2.0):
+def weather_maintenance_loss(data, turbine=None, failures_per_year=8.3, repair_hours=12, hs_limit=2.0):
     """
     Expected energy loss from repairs that have to wait for low waves.
 
@@ -108,9 +108,13 @@ def weather_maintenance_loss(data, turbine=None, failures_per_year=6, repair_hou
     found from the time series; the average loss per failure is multiplied
     by the number of failures per year.
 
-    The default values (6 failures per year, 12 h repairs, Hs < 2.0 m) are
-    simple assumptions for illustration. The result depends strongly on
-    hs_limit - see plots.plot_maintenance_downtime().
+    Default failure rate and repair time from Carroll et al. (2016), Wind
+    Energy 19, 1107-1119: 8.3 failures per turbine per year (sec. 5.1,
+    p. 1110), and 12 h as the mean repair time weighted by failure rate
+    (Table II, p. 1117: minor 6.7 h, major 17.6 h, replacement 116 h; the
+    repair time excludes travel and waiting for access). Hs < 2.0 m is an
+    assumption. The result depends strongly on hs_limit - see
+    plots.plot_maintenance_downtime().
     """
     t = turbines.get(turbine)
     power = power_output(data, t).to_numpy()
@@ -295,7 +299,7 @@ def annual_energy_losses(
     turbine=None,
     maintenance="weather",
     downtime_days=14,
-    failures_per_year=6,
+    failures_per_year=8.3,
     repair_hours=12,
     hs_limit=2.0,
     electrical=0.02,

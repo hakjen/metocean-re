@@ -80,7 +80,7 @@ def plot_losses_by_stability(data, turbine=None, output_file="losses_by_stabilit
     return finish(fig, output_file)
 
 
-def plot_maintenance_downtime(data, turbine=None, repair_hours=12, hs_limit=2.0, failures_per_year=6,
+def plot_maintenance_downtime(data, turbine=None, repair_hours=12, hs_limit=2.0, failures_per_year=8.3,
                               output_file="maintenance_downtime.png"):
     """
     Left: share of time with waves low enough for access, per month.

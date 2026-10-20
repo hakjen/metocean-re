@@ -468,6 +468,38 @@ tall per turbin: nominell effekt, cut-in, nominell vind, cut-out, navhøyde og r
 - **Status:** ✅ Sjekket mot boka.
 - **Kan brukes:** Ja.
 
+### Carroll mfl. (2016) – feilrate og reparasjonstid
+
+- **Referanse:** Carroll, J., McDonald, A., McMillan, D. (2016). Failure rate,
+  repair time and unscheduled O&M cost analysis of offshore wind turbines.
+  *Wind Energy* 19(6), 1107–1119.
+  [doi:10.1002/we.1887](https://doi.org/10.1002/we.1887)
+- **Brukt i:** `wind_losses.py: weather_maintenance_loss`, `annual_energy_losses`;
+  `plots/wind_losses.py: plot_maintenance_downtime` (standardverdiene)
+- **Verdier i koden:** 8,3 feil per turbin per år, 12 t reparasjonstid
+- **Hvor i artikkelen** (PDF-side n = s. 1106 + n):
+  - Avsn. 5.1, s. 1110: «The average failure rate for an offshore wind turbine
+    from this analysis is 8.3 failures per turbine per year», fordelt på 6,2 små
+    reparasjoner, 1,1 store reparasjoner og 0,3 store utskiftinger.
+  - Konklusjonen, s. 1117: feilraten flater ut på ca. 10 per turbin per år fra
+    tredje driftsår.
+  - Tabell II, s. 1117: feilrate og reparasjonstid per kategori: små 6,81/år og
+    6,67 t, store 1,17/år og 17,64 t, utskifting 0,29/år og 116,19 t. Tabellen sier
+    «days», men tallene må være timer (referansekolonnen har samme verdier som
+    Tabell I, der enheten er timer).
+  - Avsn. 5.5, s. 1115: reparasjonstiden er bare tiden teknikerne er i turbinen,
+    uten reisetid og venting på tilgang.
+- **Sammenligning med koden:**
+  - Feilraten er endret fra 6 til 8,3 (avtalt med Håkon) for å stemme med kilden.
+  - 12 t er Carrolls reparasjonstid vektet med feilrate:
+    (6,81·6,67 + 1,17·17,64 + 0,29·116,19) / 8,27 ≈ 12,1 t.
+- **Begrensninger:** Carroll teller som feil ethvert ikke-planlagt besøk der det
+  brukes materiell (s. 1117), også små feil. Koden lar alle feil stoppe turbinen
+  til et værvindu er funnet, og bruker samme Hs-grense for alle, selv om store
+  utskiftinger krever andre fartøy (Tabell I). Hs-grensen står ikke i Carroll.
+- **Status:** ✅ Sjekket mot artikkelen.
+- **Kan brukes:** Ja.
+
 ### Egne antagelser uten kilde
 
 Verdiene er delt i tre: **løst** (har fått kilde eller støtte), **trenger kilde**
@@ -478,8 +510,8 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
 |---|---|---|---|
 | z₀ = 0,0002 m | `stability.py: SEA_ROUGHNESS` | ✅ Løst | Tilsvarer Charnock-relasjonen ved moderat vind (se Charnock). |
 | z₀h = z₀ | `stability.py: _richardson_from_zeta` | ✅ Løst | Launiainen (1995), avsn. 2.2: gjelder over hav i svak til moderat vind. |
-| 6 feil/år, 12 t reparasjon | `weather_maintenance_loss` | 🔶 Trenger kilde | Carroll, J., McDonald, A., McMillan, D. (2016). Failure rate, repair time and unscheduled O&M cost analysis of offshore wind turbines. *Wind Energy* 19(6), 1107–1119. [doi:10.1002/we.1887](https://doi.org/10.1002/we.1887). Finnes via UiB, ikke lastet ned ennå. |
-| H_s < 2 m for tilgang | `weather_maintenance_loss` | 🔶 Trenger kilde | Resultatet er svært følsomt for denne verdien. Grensen for vanlige servicefartøy (CTV) er ofte 1,5–2 m. Kanskje i Carroll, ellers en DNV-kilde. |
+| 8,3 feil/år, 12 t reparasjon | `weather_maintenance_loss`, `annual_energy_losses`, `plot_maintenance_downtime` | ✅ Løst | Carroll mfl. (2016), se egen oppføring under. Feilraten er endret fra 6 til 8,3 etter avtale med Håkon, slik at den stemmer med kilden. 12 t er uendret og stemmer med Carrolls vektede gjennomsnitt (≈ 12,1 t). |
+| H_s < 2 m for tilgang | `weather_maintenance_loss` | 🔶 Trenger kilde | Resultatet er svært følsomt for denne verdien. Grensen for vanlige servicefartøy (CTV) er ofte 1,5–2 m. Står ikke i Carroll (Tabell I nevner bare at CTV brukes). Trenger en annen kilde, f.eks. DNV. |
 | 98 % relativ fuktighet over saltvann | `bulk_richardson` | 🔶 Trenger kilde | Saltvann senker metningstrykket med ca. 2 %. Faktoren 0,98 brukes i standard algoritmer for fluks over hav (COARE, Fairall mfl.). Må sjekkes. |
 | Elektrisk tap 2 % | `electrical_loss` | Egen antagelse | Typisk verdi (1–3 %). En kilde ville styrket den. NB: generatorvirkningsgraden (94,4 % i NREL 5 MW-rapporten) er ikke det samme. Den er allerede med i effektkurven. |
 | Fast vedlikehold 14 dager/år | `availability_loss` | Egen antagelse | Avtalt med veileder («ca. 2 uker minus i året»). Oppgis som «etter avtale med veileder (MET)». |
