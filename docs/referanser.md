@@ -396,15 +396,21 @@ middelverdier (ikke flukser) er tilgjengelig.
 
 ### Referanseturbinene (`turbines.cfg`)
 
-Mangler kilde i koden i dag. Verdiene i filen stemmer med rapportene:
+Referanseturbiner er offentlige turbindesign laget av forskningsinstitutter, slik
+at forskere kan regne på samme turbin og sammenligne resultater. Vi bruker seks
+tall per turbin: nominell effekt, cut-in, nominell vind, cut-out, navhøyde og rotordiameter.
 
-| Turbin | Kilde | Hvor |
-|---|---|---|
-| NREL 5 MW | Jonkman, J., Butterfield, S., Musial, W., Scott, G. (2009). *Definition of a 5-MW Reference Wind Turbine for Offshore System Development.* NREL/TP-500-38060. | nrel.gov (gratis) |
-| DTU 10 MW | Bak, C. mfl. (2013). *The DTU 10-MW Reference Wind Turbine.* DTU Wind Energy Report-I-0092. | orbit.dtu.dk (gratis) |
-| IEA 15 MW | Gaertner, E. mfl. (2020). *Definition of the IEA Wind 15-Megawatt Offshore Reference Wind Turbine.* NREL/TP-5000-75698. | nrel.gov (gratis) |
+| Turbin | Kilde | Tabell | Hvor |
+|---|---|---|---|
+| NREL 5 MW | Jonkman, J., Butterfield, S., Musial, W., Scott, G. (2009). *Definition of a 5-MW Reference Wind Turbine for Offshore System Development.* NREL/TP-500-38060. | Tabell 1-1 «Gross Properties», s. 2 | nrel.gov (gratis) |
+| DTU 10 MW | Bak, C., Zahle, F., Bitsche, R., Kim, T., Yde, A., Henriksen, L. C., Natarajan, A., Hansen, M. H. (2013). *Description of the DTU 10 MW Reference Wind Turbine.* DTU Wind Energy Report-I-0092. | Tabell 2.1 «Key parameters», s. 13, kolonnen «DTU 10MW RWT» | orbit.dtu.dk (gratis) |
+| IEA 15 MW | Gaertner, E. mfl. (2020). *Definition of the IEA Wind 15-Megawatt Offshore Reference Wind Turbine.* NREL/TP-5000-75698. | Tabell 1-1 «Key Parameters», s. 5 | nrel.gov (gratis) |
 
-- **Status:** 🔶 ⚠️ Legg kildene inn som kommentar i `turbines.cfg`.
+- **Sammenligning med koden:** Alle seks tallene i `turbines.cfg` stemmer for alle
+  tre turbinene. IEA-rapportens tabell viser også DTU 10 MW, med de samme tallene.
+- **Merk:** NREL-rapporten (s. 3) sier at diameteren på 126 m ser bort fra precone
+  (2,5°), så den faktiske diameteren er litt mindre (under 0,1 %). Kan ignoreres.
+- **Status:** ✅ Sjekket mot rapportene. Kildene står nå som kommentarer i `turbines.cfg`.
 - **Kan brukes:** Ja. Referanseturbinene er laget nettopp for å brukes fritt i forskning.
 
 ### Forenklet effektkurve
@@ -584,7 +590,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Bendat (1964): sjekk likningen for E[S^m] (likn. 80–82)
 - [x] Justus et al. (1978): sjekk likn. (15)–(16) (s. 351)
 - [x] Charnock (1955): sjekk relasjonen z₀ = α u*²/g (s. 639)
-- [ ] Legg turbinkildene inn i `turbines.cfg`
+- [x] Legg turbinkildene inn i `turbines.cfg` (tallene sjekket mot rapportene)
 - [ ] Legg NORA3-referansen og krediteringen inn i README
 - [ ] Rett docstringene i `turbulence.py` («etter prinsippet i Annex M») og `stability.py` (Launiainen, Gryning)
 
