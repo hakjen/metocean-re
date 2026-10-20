@@ -409,11 +409,23 @@ Mangler kilde i koden i dag. Verdiene i filen stemmer med rapportene:
 - **Referanse:** Holthuijsen, L. H. (2007). *Waves in Oceanic and Coastal Waters.*
   Cambridge University Press. doi:10.1017/CBO9780511618536
 - **Brukt i:** `wind_losses.py: wave_tilt_amplitude`
-- **Likning:** L = g T_p² / (2π) (dypt vann); maks helning = arctan(π H_s / L)
-- **Hvorfor denne:** Dypvannsrelasjonen gjelder når dybden > L/2, noe som holder
-  for de fleste flytende vindparker. πH/L er maks helning for en regulær bølge med høyde H.
-- **Status:** 🔶 Kapittel 5 (lineær bølgeteori) må sjekkes. ⚠️ Å sette H = H_s
-  for en uregelmessig sjø er vår forenkling og bør stå som det.
+- **Likning i koden:** L = g T_p² / (2π) (dypt vann); maks helning = arctan(π H_s / L)
+- **Hvor i boka** (kap. 5 «Linear wave theory (oceanic waters)», s. 105–143):
+  - Avsn. 5.4.3 «Dynamics», s. 123, likn. (5.4.18): L₀ = g T²/(2π) (dypt vann).
+    Stemmer med koden. Rett over står den generelle formen for alle dyp, likn. (5.4.17):
+    L = g T²/(2π) · tanh(2πd/L).
+  - Note 5A, s. 118: harmonisk bølge η = (H/2) sin(2πt/T − 2πx/L). Største helning
+    (H/2)(2π/L) = πH/L følger direkte av dette (står ikke ferdig utregnet i boka).
+  - S. 118: lineær teori forutsetter liten amplitude (ak ≪ 2π). Avsn. 5.1, s. 105:
+    teorien bør ikke brukes for bratte bølger.
+- **Hvorfor denne:** Dypvannsrelasjonen er eksplisitt og gjelder når dybden er mer
+  enn omtrent halve bølgelengden. Med Tp = 15 s gir likn. (5.4.18) L₀ ≈ 350 m, så
+  dybden bør være over ca. 175 m. Utsira Nord er etter det vi vet rundt 200–280 m
+  dypt (bør sjekkes i en kilde om feltet).
+- **Begrensning:** ⚠️ Boka beskriver en regulær bølge med høyde H. At vi setter
+  H = H_s for en uregelmessig sjø, er vår forenkling og står ikke i boka.
+- **Hvor:** Cambridge Core via UiB (kapittel 5 som PDF).
+- **Status:** ✅ Sjekket mot boka.
 - **Kan brukes:** Ja.
 
 ### Egne antagelser uten kilde
@@ -509,7 +521,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
 - [ ] Bolton (1980): sjekk likning (10)
 - [ ] Burton et al. (2011): sjekk avsnitt 3.2
-- [ ] Holthuijsen (2007): sjekk kapittel 5
+- [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
 - [ ] Bendat (1964): sjekk likningen for E[S^m]
 - [ ] Legg turbinkildene inn i `turbines.cfg`
 - [ ] Legg NORA3-referansen og krediteringen inn i README

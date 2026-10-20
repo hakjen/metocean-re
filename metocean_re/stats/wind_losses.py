@@ -265,7 +265,9 @@ def wave_tilt_amplitude(data, hs="hs", tp="tp", response=1.0):
     only tilts half as much (large floaters move less than the waves).
 
     Source (deep water wavelength): Holthuijsen (2007), Waves in Oceanic and
-    Coastal Waters, Cambridge University Press, ch. 5.
+    Coastal Waters, Cambridge University Press, sec. 5.4.3, eq. (5.4.18).
+    The max slope pi * H / L follows from the harmonic wave in Note 5A
+    (p. 118). Using Hs for H in an irregular sea is a simplification.
     """
     wavelength = GRAVITY * data[tp] ** 2 / (2 * np.pi)
     slope = np.degrees(np.arctan(np.pi * data[hs] / wavelength))
