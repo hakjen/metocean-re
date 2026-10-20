@@ -300,29 +300,49 @@ middelverdier (ikke flukser) er tilgjengelig.
 - **Kan brukes:** Ja. For offshore finnes også IEC 61400-3-1:2019 med en egen
   σ₁-formel, som kan være relevant å nevne.
 
-### IEC 61400-12-1, Annex M og Albers (2010) – turbulensnormalisering
+### Albers (2010) og IEC 61400-12-1, Annex M – turbulensnormalisering
 
 - **Referanser:**
-  - IEC 61400-12-1:2017, Annex M (informativ): normalisering av effektkurver for turbulensintensitet.
   - Albers, A. (2010). Turbulence and shear normalisation of wind turbine power
     curve. *Proc. European Wind Energy Conference (EWEC) 2010*, Warszawa,
-    vol. 6, s. 4116–4123.
+    vol. 6, s. 4116–4123. Deutsche WindGuard Consulting GmbH.
+  - Se også: IEC 61400-12-1:2017, Annex M (informativt vedlegg): normalisering
+    av effektkurver for turbulensintensitet. Bygger på Albers-metoden.
 - **Brukt i:** `turbulence.py: turbulent_power`
-- **Likning:** P_turb(U) = ∫ P(u) · N(u; U, σ_u) du (Gauss-Hermite-kvadratur)
-- **Hvorfor denne:** Effektkurven er krum, så gjennomsnittseffekten over en time
-  med varierende vind er ikke lik effekten ved middelvinden. Å anta normalfordelt
-  vind innenfor tidssteget er prinsippet i Albers-metoden og Annex M.
+- **Likning i koden:** P_turb(U) = ∫ P(u) · N(u; U, σ_u) du (Gauss-Hermite-kvadratur)
+- **Hvor i Albers** (PDF uten trykte sidetall, så PDF-sider brukes):
+  - Avsn. 3.1, likn. (1), PDF-s. 2: P_sim(v) = ∫ P_I=0(v) f(v) dv, der f(v)
+    tilnærmes med en normalfordeling bestemt av middelvind og turbulensintensitet
+    («Normal Distribution Model»). Stemmer med koden.
+  - Avsn. 3.1, PDF-s. 2: hovedantagelsen at turbinen hele tiden følger samme
+    effektkurve («zero turbulence power curve»), fordi den reagerer i løpet av
+    sekunder mens vindvariasjonene skjer over ~100 s.
+  - Avsn. 3.2 og figur 1, PDF-s. 2–3: null-turbulens-kurven lages i tre steg fra
+    målte data. Første steg er P ∝ v³ fra cut-in til nominell effekt.
+  - Avsn. 5.1, PDF-s. 4–5: metoden kan brukes til å tilpasse teoretiske
+    effektkurver til turbulensen på et sted, for vindressursberegninger. Slik bruker vi den.
+  - Avsn. 7, PDF-s. 6: metoden «shifts power curve raw data always in the right
+    direction», men effekten blir ofte undervurdert når turbulensen avviker mye
+    fra referansen.
+- **Sammenligning med koden:**
+  - Integrasjonen (likn. 1) stemmer.
+  - ⚠️ Vi bruker den forenklede u³-kurven direkte som null-turbulens-kurve, uten
+    Albers' justering mot målte data (avsn. 3.2). Kurven vår ligner Albers' første
+    steg (P ∝ v³), så dette er en rimelig forenkling, men den må stå som det.
+  - Albers korrigerer for variasjon innenfor 10-minutters perioder. Vi bruker
+    σ_u fra NORA3-TKE (modellverdier per time eller tredje time). Prinsippet er
+    det samme, men tidsskalaen er en annen.
+- **Hvorfor denne:** Effektkurven er krum, så gjennomsnittseffekten over et
+  tidssteg med varierende vind er ikke lik effekten ved middelvinden. Albers'
+  metode er enkel, fungerer for alle turbintyper og er tatt inn i IEC 61400-12-1.
 - **Status:**
-  - IEC Annex M: 🔶 Bekreftet at Annex M i 2017-utgaven handler om
-    turbulensnormalisering og bygger på Albers-metoden.
-  - Albers: ❓ Artikkelen siteres av mange (bl.a. NREL og DTU) med disse
-    opplysningene, men selve artikkelen er ikke funnet. Sidetallene kommer fra siterende kilder.
-  - ⚠️ Koden gjør bare *integrasjonssteget* i metoden. Annex M utleder først en
-    «null-turbulens-effektkurve» fra målte data. Vi bruker i stedet den forenklede
-    u³-kurven som null-turbulens-kurve. Skriv «etter prinsippet i Annex M» i
-    stedet for at koden følger Annex M.
-- **Kan brukes:** IEC: ja, som hovedkilde. Albers: helst ikke alene. Bruk IEC
-  som hovedkilde og Albers som tillegg hvis den bekreftes.
+  - Albers: ✅ Sjekket mot artikkelen. Albers henviser selv til IEC 61400-12-1:2005,
+    og metoden ble foreslått for neste utgave av standarden, som ble Annex M i 2017-utgaven.
+    Sidetallene i proceedings (4116–4123) kommer fra siterende kilder.
+  - IEC Annex M: 🔶 Ikke lest. Bekreftet via sekundærkilder at vedlegget handler
+    om turbulensnormalisering og bygger på Albers.
+- **Kan brukes:** Ja. Albers er originalkilden for metoden og brukes som
+  hovedkilde. IEC Annex M som «se også».
 
 ---
 
@@ -485,7 +505,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Paulson (1970): sjekk ψ_m, ψ_h og γ = 16 (s. 858–859)
 - [x] Dyer (1974): sjekk −5ζ (stabil) og 16 (ustabil)
 - [x] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
-- [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
+- [x] Albers (2010): artikkelen funnet og likn. (1) sjekket
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
 - [ ] Bolton (1980): sjekk likning (10)
 - [ ] Burton et al. (2011): sjekk avsnitt 3.2
