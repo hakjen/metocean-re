@@ -479,12 +479,26 @@ Disse må enten få en kilde eller beskrives tydelig som antagelser:
   prediction of peaks, fatigue damage, and catastrophic failures.* NASA CR-33.
   [ntrs.nasa.gov/citations/19640008076](https://ntrs.nasa.gov/citations/19640008076)
 - **Brukt i:** `wind_loads.py: relative_fatigue_damage`
-- **Likning:** E[S^m] = (2√2 σ)^m Γ(1 + m/2) (Rayleigh-fordelte spenningsvidder, smalbånd)
+- **Likning i koden:** E[S^m] = (2√2 σ)^m Γ(1 + m/2) (Rayleigh-fordelte spenningsvidder, smalbånd)
+- **Hvor i rapporten** (rapportens sidetall = PDF-sidetall − 3):
+  - Avsn. 3 «Peak Probability Functions for Narrow Band Noise», likn. (27)–(28),
+    rapport-s. 12 (PDF-s. 15): toppene i smalbåndet normalfordelt støy er Rayleigh-fordelte.
+  - Avsn. 6 «Expected Fatigue Damage and its Variance», likn. (43)–(45),
+    rapport-s. 19–20 (PDF-s. 22–23): Palmgren-Miner, skade per halvsyklus d = K |S|^b.
+  - Avsn. 7.1 «Expected Value in Damage Estimates», likn. (80)–(82),
+    rapport-s. 29–30 (PDF-s. 32–33): forventet skade ∝ (√2 σ)^b Γ(1 + b/2).
+- **Sammenligning med koden:** Bendat regner med toppamplituder, (√2 σ)^b. Koden
+  regner med spenningsvidder (dobbelt så store), (2√2 σ)^m. Forskjellen er
+  konstanten 2^m, som forsvinner fordi koden bare bruker hvert tidsstegs andel av
+  total skade. Resultatet er det samme.
+- **Forenklinger:**
+  - Samme antall sykluser i hvert tidssteg. Hos Bendat er antallet halvsykluser
+    m = 2N₀⁺T (likn. 48) og avhenger av hvor ofte signalet krysser null.
+  - Spenningen antas proporsjonal med skyvekraften, så σ = standardavviket til skyvekraften.
+  - Smalbånd (avsn. 7.1). Ekte turbinlaster er ofte mer bredbåndet.
 - **Hvorfor denne:** Gir utmattingsskade direkte fra standardavviket, uten
   tidsserie og rainflow-telling. NORA3 har ikke data med høy nok oppløsning til rainflow.
-- **Status:** ✅ Rapporten finnes på NTRS med denne tittelen og nummeret.
-  Innholdsfortegnelsen dekker smalbåndstopper og utmattingsskade. 🔶 Likningen er
-  ikke sjekket i teksten.
+- **Status:** ✅ Sjekket mot rapporten.
 - **Kan brukes:** Ja (gratis, offentlig NASA-rapport).
 
 ### Egne antagelser uten kilde
@@ -536,7 +550,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [ ] Bolton (1980): sjekk likning (10)
 - [x] Burton et al. (2021, 3. utg.): sjekk avsnitt 3.2 (likn. 3.12, 3.13, 3.16)
 - [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
-- [ ] Bendat (1964): sjekk likningen for E[S^m]
+- [x] Bendat (1964): sjekk likningen for E[S^m] (likn. 80–82)
 - [ ] Legg turbinkildene inn i `turbines.cfg`
 - [ ] Legg NORA3-referansen og krediteringen inn i README
 - [ ] Rett docstringene i `turbulence.py` («etter prinsippet i Annex M») og `stability.py` (Launiainen, Gryning)

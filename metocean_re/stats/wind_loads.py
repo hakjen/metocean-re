@@ -117,7 +117,9 @@ def relative_fatigue_damage(data, turbine=None, wohler_exponent=WOHLER_STEEL):
     step is proportional to E[S^m] (Palmgren-Miner rule).
 
     Source: Bendat (1964), Probability functions for random responses,
-    NASA CR-33 (narrow-band approximation).
+    NASA CR-33 (narrow-band approximation): Rayleigh peaks, eq. (28);
+    expected damage, eqs. (80)-(82). Bendat uses peak amplitudes instead of
+    ranges, which only changes the result by the constant 2^m.
     """
     sigma = thrust_std(data, turbine).fillna(0)
     m = wohler_exponent
