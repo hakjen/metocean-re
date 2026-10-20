@@ -161,8 +161,10 @@ def _richardson_from_zeta(zeta, z, z0=SEA_ROUGHNESS):
 
         Ri_b = z/L * (ln(z/z0) - psi_h) / (ln(z/z0) - psi_m)^2
 
-    Source: Launiainen (1995), Boundary-Layer Meteorology 76, 165-179.
-    The same roughness length is used for momentum and heat (simplification).
+    Source: Launiainen (1995), Boundary-Layer Meteorology 76, 165-179,
+    eq. (2), with alpha_HN = 1 as in the paper. The same roughness length is
+    used for momentum and heat, which Launiainen (sec. 2.2) notes is
+    generally true over water in light to moderate winds.
     """
     log_z = np.log(z / z0)
     return zeta * (log_z - psi_heat(zeta)) / (log_z - psi_momentum(zeta)) ** 2
@@ -173,8 +175,13 @@ def stability_parameter(data, z=50):
     Stability parameter z/L at height z [m], estimated from the bulk Richardson number.
 
     _richardson_from_zeta() increases steadily with z/L, so it is inverted
-    by interpolation in a table. In very stable conditions Ri_b approaches
-    0.2 and z/L is capped at 10.
+    by interpolation in a table (the "inverse mapping" in Launiainen 1995,
+    p. 167). In very stable conditions Ri_b approaches 0.2 and z/L is
+    capped at 10.
+
+    The stable correction psi = -5 z/L gives too strong stability effects
+    for z/L > 0.5 (Launiainen 1995, sec. 2.3), so L in the "very stable"
+    class is uncertain.
     """
     zeta_table = np.concatenate([-np.logspace(2, -4, 300), [0], np.logspace(-4, 1, 300)])
     ri_table = _richardson_from_zeta(zeta_table, z)

@@ -152,15 +152,29 @@ middelverdier (ikke flukser) er tilgjengelig.
   studies. *Boundary-Layer Meteorology* 76, 165–179.
   [doi:10.1007/BF00710895](https://doi.org/10.1007/BF00710895)
 - **Brukt i:** `stability.py: _richardson_from_zeta`, `stability_parameter`
-- **Likning:** Ri_b = ζ (ln(z/z₀) − ψ_h(ζ)) / (ln(z/z₀) − ψ_m(ζ))²
+- **Likning i koden:** Ri_b = ζ (ln(z/z₀) − ψ_h(ζ)) / (ln(z/z₀) − ψ_m(ζ))²
+- **Hvor i artikkelen:**
+  - Avsn. 2.1, s. 167, likn. (2): ζ = R_z (ln z/z₀ − ψ_M)² / ( α_HN (ln z/z_T − ψ_H) ).
+    Koden har samme likning, løst for Ri_b, med α_HN = 1 og z_T = z₀.
+  - S. 167, under likn. (2): α_HN ≈ 1 er brukt i artikkelen.
+  - S. 167, etter likn. (2): metoden koden bruker, å lage sammenhengen for
+    vilkårlige ζ og finne ζ ved «inverse mapping» fra observert R_z.
+  - Avsn. 2.2, s. 167: z_T ≈ z₀ (C_D ≈ C_H) er «generally true over water in
+    light to moderate winds». Dette støtter forenklingen vår.
+  - Vedlegget, s. 177–178: (A8) stabil ψ = −bζ med b ≈ 5,2 (Webb 1970), koden
+    bruker 5 (Dyer). (A10)–(A11) ustabil Businger-Dyer med konstant 15–16,
+    koden bruker 16.
 - **Hvorfor denne:** Dette er sammenhengen mellom Ri_b og z/L som følger av
-  Monin-Obukhov-profilene. Den kan ikke løses analytisk for z/L, så koden lager
-  en tabell og inverterer ved interpolasjon (i stedet for Launiainens
-  tilnærmingsformler). Det er like nøyaktig og enklere å forstå.
+  Monin-Obukhov-profilene. Den kan ikke løses analytisk for z/L. Koden
+  inverterer den ved interpolasjon i en tabell, slik artikkelen beskriver, i
+  stedet for å bruke Launiainens tilnærmingsformler (4)–(11). Det er like
+  nøyaktig og enklere å forstå.
+- **Begrensning:** Avsn. 2.3, s. 169: den lineære formen ψ = −5ζ gir for sterke
+  stabilitetseffekter når ζ > 0,5. Launiainen anbefaler Holtslag og De Bruin
+  (1988) for sterk stabilitet. Koden bruker −5ζ opp til ζ = 10, så L-verdiene i
+  klassen «very stable» er usikre.
 - **Hvor:** Springer, via Oria / universitetsbiblioteket.
-- **Status:** ✅ ⚠️ Teksten i docstringen bør presisere at vi bruker
-  *sammenhengen* fra artikkelen, men løser den numerisk, ikke med Launiainens
-  tilnærmingsformel. Forenklingen z₀h = z₀ er vårt valg (Launiainen tar med forholdet z₀/z₀h).
+- **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
 ### Paulson (1970) og Dyer (1974)
@@ -419,6 +433,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [ ] Bestem utgave av IEC 61400-12-1 (2017 eller 2022) og sjekk Annex M og avsnittet om tetthetskorreksjon
 - [ ] IEC 61400-1:2019: sjekk avsnitt for NTM, Tabell 1 (vurder klasse A+) og Annex C (σ-forhold)
 - [x] Wagner et al. (2009): sjekk at REWS-formelen står der (likn. 6, s. 351)
+- [x] Launiainen (1995): sjekk likn. (2) og metoden (s. 167)
 - [ ] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
