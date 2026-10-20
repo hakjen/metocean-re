@@ -121,9 +121,11 @@ def bulk_richardson(data, z=50):
 
     Ri_b = g / theta_v * (theta_v(z) - theta_v(0)) * z / u(z)^2
 
-    The air at the sea surface is assumed saturated (98 % relative humidity
-    over salt water) at the sea surface temperature. The pressure is found
-    from the air density at height z.
+    The air at the sea surface is assumed saturated at the sea surface
+    temperature, with the vapour pressure of sea water taken as 0.98 times
+    that of pure water because of the salinity (Fairall et al. 2003, J.
+    Climate 16, 571-591, sec. 2b, p. 573). The pressure is found from the
+    air density at height z.
 
     Source: Stull (1988), An Introduction to Boundary Layer Meteorology,
     sec. 5.6.3, eq. (5.6.3), with the wind at the surface set to zero.

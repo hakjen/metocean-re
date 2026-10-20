@@ -154,6 +154,31 @@ middelverdier (ikke flukser) er tilgjengelig.
 - **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
+### Fairall mfl. (2003) – damptrykk over saltvann
+
+- **Referanse:** Fairall, C. W., Bradley, E. F., Hare, J. E., Grachev, A. A.,
+  Edson, J. B. (2003). Bulk parameterization of air–sea fluxes: Updates and
+  verification for the COARE algorithm. *J. Climate* 16(4), 571–591.
+  [doi:10.1175/1520-0442(2003)016<0571:BPOASF>2.0.CO;2](https://doi.org/10.1175/1520-0442(2003)016%3C0571:BPOASF%3E2.0.CO;2)
+- **Brukt i:** `stability.py: bulk_richardson` (`specific_humidity(sst, 0.98, p_0)`)
+- **Hvor i artikkelen** (PDF-side n = s. 570 + n):
+  - Avsn. 2b «COARE 2.5», s. 573: fuktigheten ved overflaten beregnes fra
+    overflatetemperaturen og «the vapor pressure of seawater (0.98 times the vapor
+    pressure of pure water; Kraus and Businger 1994)».
+  - S. 584: «reduction in seawater vapor pressure by 2% due to salinity».
+- **Sammenligning med koden:** Stemmer. Koden ganger metningstrykket ved
+  havoverflatens temperatur med 0,98. Docstringen kalte det tidligere «98 %
+  relative humidity», og er nå presisert til at det er saltholdigheten som senker
+  damptrykket.
+- **Begrensning:** COARE bruker temperaturen helt i overflaten («cool skin»), som
+  er noen tideler av en grad kaldere enn vannet under. Vi bruker havoverflate-
+  temperaturen fra NORA3. Liten betydning for oss.
+- **Hvorfor denne:** COARE er en av de mest brukte algoritmene for fluks mellom
+  hav og atmosfære, så den er en god kilde for faktoren. Opprinnelig kilde er
+  læreboka Kraus og Businger (1994).
+- **Status:** ✅ Sjekket mot artikkelen.
+- **Kan brukes:** Ja.
+
 ### Launiainen (1995)
 
 - **Referanse:** Launiainen, J. (1995). Derivation of the relationship between the
@@ -512,7 +537,7 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
 | z₀h = z₀ | `stability.py: _richardson_from_zeta` | ✅ Løst | Launiainen (1995), avsn. 2.2: gjelder over hav i svak til moderat vind. |
 | 8,3 feil/år, 12 t reparasjon | `weather_maintenance_loss`, `annual_energy_losses`, `plot_maintenance_downtime` | ✅ Løst | Carroll mfl. (2016), se egen oppføring under. Feilraten er endret fra 6 til 8,3 etter avtale med Håkon, slik at den stemmer med kilden. 12 t er uendret og stemmer med Carrolls vektede gjennomsnitt (≈ 12,1 t). |
 | H_s < 2 m for tilgang | `weather_maintenance_loss` | 🔶 Trenger kilde | Resultatet er svært følsomt for denne verdien. Grensen for vanlige servicefartøy (CTV) er ofte 1,5–2 m. Står ikke i Carroll (Tabell I nevner bare at CTV brukes). Trenger en annen kilde, f.eks. DNV. |
-| 98 % relativ fuktighet over saltvann | `bulk_richardson` | 🔶 Trenger kilde | Saltvann senker metningstrykket med ca. 2 %. Faktoren 0,98 brukes i standard algoritmer for fluks over hav (COARE, Fairall mfl.). Må sjekkes. |
+| Faktor 0,98 for damptrykk over saltvann | `bulk_richardson` | ✅ Løst | Fairall mfl. (2003), se egen oppføring under avsn. 2. |
 | Elektrisk tap 2 % | `electrical_loss` | Egen antagelse | Typisk verdi (1–3 %). En kilde ville styrket den. NB: generatorvirkningsgraden (94,4 % i NREL 5 MW-rapporten) er ikke det samme. Den er allerede med i effektkurven. |
 | Fast vedlikehold 14 dager/år | `availability_loss` | Egen antagelse | Avtalt med veileder («ca. 2 uker minus i året»). Oppgis som «etter avtale med veileder (MET)». |
 | Restart under 20 m/s etter stormstopp | `power_with_hysteresis` | Egen antagelse | Typisk verdi til illustrasjon, ikke fra en bestemt turbin. |
