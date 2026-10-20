@@ -216,7 +216,16 @@ middelverdier (ikke flukser) er tilgjengelig.
   - Paulson: ✅ Sjekket mot artikkelen. Hos Paulson tilskrives B-D Businger
     (1966) og Dyer (upublisert); Dyer (1974) er oversiktsartikkelen som
     oppsummerte formene senere.
-  - Dyer: 🔶 Ikke sjekket ennå. Sjekk −5ζ for stabil luft og 16 for ustabil.
+  - Dyer: ✅ Sjekket mot artikkelen (ingen likningsnumre, så sidetall brukes):
+    - Sammendraget (s. 363) og avsn. 4 «Concluding Remarks» (s. 371): anbefalte
+      former. Ustabil: φ_M = (1 − 16 z/L)^(−1/4), φ_H = (1 − 16 z/L)^(−1/2).
+      Stabil: φ_M = φ_H = 1 + 5 z/L. Konstantene 16 og 5 stemmer med koden.
+    - Dyer gir gradientformene φ, ikke ψ. ψ = −5 z/L for stabil luft er
+      utledet ved å integrere φ = 1 + 5 z/L (definisjonen av ψ i Paulsons likn. (3)).
+    - S. 371: formene er fra Dyer og Hicks (1970), Quart. J. Roy. Meteor. Soc.
+      96, 715–721, som er originalkilden om den skulle trengs.
+    - S. 371: «on the stable side, the experimental material is rather
+      limited». Dette passer med Launiainens advarsel om −5ζ ved sterk stabilitet.
 - **Kan brukes:** Ja.
 
 ### Gryning et al. (2007) – stabilitetsklasser
@@ -453,7 +462,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Wagner et al. (2009): sjekk at REWS-formelen står der (likn. 6, s. 351)
 - [x] Launiainen (1995): sjekk likn. (2) og metoden (s. 167)
 - [x] Paulson (1970): sjekk ψ_m, ψ_h og γ = 16 (s. 858–859)
-- [ ] Dyer (1974): sjekk −5ζ (stabil) og 16 (ustabil)
+- [x] Dyer (1974): sjekk −5ζ (stabil) og 16 (ustabil)
 - [ ] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6

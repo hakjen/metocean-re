@@ -140,8 +140,9 @@ def psi_momentum(zeta):
 
     Unstable: Paulson (1970), J. Applied Meteorology 9, 857-861, p. 858:
     the integrated Businger-Dyer form with x = (1 - 16 z/L)^(1/4), where
-    16 gave the best fit (p. 859). See also Dyer (1974), Boundary-Layer
-    Meteorology 7, 363-372. Stable: psi_m = -5 z/L (Dyer 1974).
+    16 gave the best fit (p. 859). Stable: psi_m = -5 z/L, integrated from
+    phi_m = 1 + 5 z/L. Both are the forms recommended by Dyer (1974),
+    Boundary-Layer Meteorology 7, 363-372 (p. 371), after Dyer and Hicks (1970).
     """
     zeta = np.asarray(zeta, dtype=float)
     x = np.power(1 - 16 * np.minimum(zeta, 0), 0.25)
