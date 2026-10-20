@@ -138,9 +138,10 @@ def psi_momentum(zeta):
     """
     Stability correction of the wind profile, psi_m(z/L).
 
-    Unstable: Paulson (1970), J. Applied Meteorology 9, 857-861, with the
-    Businger-Dyer form x = (1 - 16 z/L)^(1/4) (Dyer 1974, Boundary-Layer
-    Meteorology 7, 363-372). Stable: psi_m = -5 z/L (Dyer 1974).
+    Unstable: Paulson (1970), J. Applied Meteorology 9, 857-861, p. 858:
+    the integrated Businger-Dyer form with x = (1 - 16 z/L)^(1/4), where
+    16 gave the best fit (p. 859). See also Dyer (1974), Boundary-Layer
+    Meteorology 7, 363-372. Stable: psi_m = -5 z/L (Dyer 1974).
     """
     zeta = np.asarray(zeta, dtype=float)
     x = np.power(1 - 16 * np.minimum(zeta, 0), 0.25)

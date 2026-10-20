@@ -192,13 +192,31 @@ middelverdier (ikke flukser) er tilgjengelig.
     ψ_m = 2 ln((1+x)/2) + ln((1+x²)/2) − 2 arctan x + π/2,
     ψ_h = 2 ln((1+x²)/2)
   - Stabil (ζ ≥ 0): ψ_m = ψ_h = −5ζ
+- **Hvor i Paulson** (formlene har ikke likningsnummer, så sidetall brukes):
+  - S. 858, avsn. 2 «Profile representations», høyre kolonne: de integrerte
+    B-D-formene ψ₁ = 2 ln[(1+x)/2] + ln[(1+x²)/2] − 2 tan⁻¹x + π/2 og
+    ψ₂ = 2 ln[(1+x²)/2], med x = (1 − γ z/L)^(1/4). Begge stemmer nøyaktig
+    med `psi_momentum` og `psi_heat` for ustabil luft.
+  - S. 858: utgangspunktet φ₁ = (1 − γ z/L)^(−1/4), φ₂ = (1 − γ z/L)^(−1/2), og
+    definisjonen av ψ i likn. (3).
+  - S. 859, avsn. 4: «The B-D representation gives the best fit to both the
+    wind and temperature profiles for γ = 16». Dette støtter konstanten 16 i koden.
+  - S. 860, konklusjonen: B-D gir best samtidig tilpasning for vind og
+    temperatur. Log-lineær form passer bare nær nøytral luft.
+- **Begrensning:** Paulsons test (s. 859) bygger på 34 profiler fra Kerang,
+  Australia: tørt land, 0,5–16 m, bare ustabil luft. Vi bruker formene i 50 m
+  over hav, som er vanlig praksis, men en ekstrapolering.
 - **Hvorfor disse:** Businger-Dyer-funksjonene er de klassiske og mest brukte
   stabilitetsfunksjonene, og Paulson ga den integrerte formen (ψ) som trengs i
   profilene. Det finnes nyere funksjoner for svært stabil luft (f.eks. Beljaars &
   Holtslag 1991), men −5ζ er standard for moderat stabil luft og holder for en
   klasseinndeling.
-- **Hvor:** Paulson er fritt tilgjengelig hos AMS. Dyer via Springer / Oria.
-- **Status:** ✅ 🔶 Formlene i koden stemmer med standardformene. Konstantene (16 og 5) bør sjekkes i Dyer.
+- **Hvor:** Paulson via JSTOR / AMS (UiB). Dyer via Springer / Oria.
+- **Status:**
+  - Paulson: ✅ Sjekket mot artikkelen. Hos Paulson tilskrives B-D Businger
+    (1966) og Dyer (upublisert); Dyer (1974) er oversiktsartikkelen som
+    oppsummerte formene senere.
+  - Dyer: 🔶 Ikke sjekket ennå. Sjekk −5ζ for stabil luft og 16 for ustabil.
 - **Kan brukes:** Ja.
 
 ### Gryning et al. (2007) – stabilitetsklasser
@@ -434,6 +452,8 @@ Ting som gjenstår (kryss av når det er gjort):
 - [ ] IEC 61400-1:2019: sjekk avsnitt for NTM, Tabell 1 (vurder klasse A+) og Annex C (σ-forhold)
 - [x] Wagner et al. (2009): sjekk at REWS-formelen står der (likn. 6, s. 351)
 - [x] Launiainen (1995): sjekk likn. (2) og metoden (s. 167)
+- [x] Paulson (1970): sjekk ψ_m, ψ_h og γ = 16 (s. 858–859)
+- [ ] Dyer (1974): sjekk −5ζ (stabil) og 16 (ustabil)
 - [ ] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
