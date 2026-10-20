@@ -237,11 +237,32 @@ middelverdier (ikke flukser) er tilgjengelig.
 - **Brukt i:** `stability.py: CLASS_NAMES`, `_INVERSE_L_EDGES`, `stability_class`
 - **Hvorfor denne:** Klasseinndelingen etter L er mye brukt i vindenergi-litteraturen
   (spesielt fra DTU/Risø), og den er laget for vindprofiler opp i rotorhøyde.
-- **Status:** ✅ 🔶 ⚠️ Artikkelen finnes og de bibliografiske dataene stemmer.
-  Tabell 1 er ikke sjekket. Etter det vi kjenner til går de ytterste klassene i
-  originalen til **−100 < L < −50** (svært ustabil) og **10 < L < 50** (svært
-  stabil). At vi utvider dem til L = 0 er vårt eget valg og må sies tydelig.
-  Bekreft grensene i artikkelen.
+- **Hvor i artikkelen:**
+  - Tabell 1, s. 260, teksten under tabellen: «10<L<50 (very stable);
+    50<L<200 (Stable); 200<L<500 (near neutral/stable); L>500 or L<−500
+    (neutral); −500<L<−200 (near neutral/unstable); −200<L<−100 (unstable)
+    and −100<L<−50 (very unstable)».
+  - Avsn. 3.1 «Data processing», s. 259: målingene er delt i «seven stability
+    classes according to the Obukhov length». Bare vind over 3 m/s i 10 m er brukt.
+- **Sammenligning med koden:** De fem midterste klassene stemmer. De to ytterste
+  er utvidet i koden: very unstable −100 < L < 0 (Gryning: −100 < L < −50) og
+  very stable 0 < L < 50 (Gryning: 10 < L < 50). Om grensene er med (≤) eller
+  ikke (<), har ingen praktisk betydning.
+- **Hvorfor vi utvider til L = 0:**
+  - Alle tidssteg må få en klasse. Ellers faller de mest ekstreme tilfellene ut
+    av `losses_by_stability`, og andelene summerer ikke til 100 %.
+  - Jo nærmere L er 0, jo sterkere er stabiliteten eller ustabiliteten, så disse
+    tidsstegene hører naturlig hjemme i de ytterste klassene.
+  - Gryning trengte pålitelige middelprofiler per klasse og utelot svak vind og
+    svært liten |L|, der Monin-Obukhov-teorien er upålitelig. Vi trenger bare å
+    sortere tidssteg.
+  - Ulempe: L er minst sikker nettopp her (−5ζ er for sterk ved sterk stabilitet,
+    se Launiainen og Dyer). Med z/L begrenset til [−100, 10] i 50 m blir L aldri
+    mindre enn 5 m på stabil side eller nærmere 0 enn −0,5 m på ustabil side.
+- **Begrensning:** Datagrunnlaget er fra land (Høvsøre, sektoren fra land, og
+  Hamburg), med L målt i 10–12 m (Tabell 1). Vi beregner L fra Ri_b i 50 m over
+  hav. Klasseinndelingen brukes mye offshore også.
+- **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
 ### Charnock (1955)
@@ -463,7 +484,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Launiainen (1995): sjekk likn. (2) og metoden (s. 167)
 - [x] Paulson (1970): sjekk ψ_m, ψ_h og γ = 16 (s. 858–859)
 - [x] Dyer (1974): sjekk −5ζ (stabil) og 16 (ustabil)
-- [ ] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
+- [x] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
 - [ ] Bolton (1980): sjekk likning (10)

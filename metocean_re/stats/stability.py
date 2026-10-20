@@ -33,8 +33,9 @@ VON_KARMAN = 0.4
 SEA_ROUGHNESS = 2e-4
 
 # Stability classes from the Obukhov length L [m], after Gryning et al.
-# (2007), Boundary-Layer Meteorology 124, 251-268 (Table 1). The outermost
-# classes are extended to L = 0.
+# (2007), Boundary-Layer Meteorology 124, 251-268 (Table 1, p. 260). The
+# outermost classes are extended to L = 0 (Gryning: -100 < L < -50 and
+# 10 < L < 50), so that every time step gets a class.
 #
 #   very unstable          -100 < L < 0
 #   unstable               -200 < L <= -100
