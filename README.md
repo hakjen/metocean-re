@@ -48,4 +48,17 @@ The functions use NORA3 column names as written by
 is made from NORA3 (MET Norway) with `examples/download_nora3.py` and
 `examples/build_dataset.py`.
 
+NORA3 data are provided by the Norwegian Meteorological Institute (MET Norway)
+under the [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+licence. Reference for the atmospheric hindcast:
+
+Haakenstad, H., Breivik, Ø., Furevik, B. R., Reistad, M., Bohlinger, P. and
+Aarnes, O. J. (2021). NORA3: A nonhydrostatic high-resolution hindcast of the
+North Sea, the Norwegian Sea, and the Barents Sea. *Journal of Applied
+Meteorology and Climatology* 60(10), 1443-1464.
+https://doi.org/10.1175/JAMC-D-21-0029.1
+
+The sources for the formulas in `metocean_re/stats` are listed in
+[docs/referanser.md](docs/referanser.md).
+
 Developed with assistance from Claude (Anthropic).

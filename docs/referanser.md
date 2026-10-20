@@ -620,8 +620,14 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
   Climatology* 60(10), 1443–1464.
   [doi:10.1175/JAMC-D-21-0029.1](https://doi.org/10.1175/JAMC-D-21-0029.1) ✅
 - **Brukt i:** README, `tests/data/NORA3_utsira_nord_2020_2022.csv`
-- **Status:** ⚠️ Mangler i README. Sjekk også MET Norways lisens og krav til
-  kreditering for dataene (NORA3 er normalt CC BY 4.0) før testdataene ligger i et offentlig repo.
+- **Lisens:** MET Norways datakatalog oppgir CC BY 4.0 for NORA3
+  ([data.met.no](https://data.met.no/dataset/ddb4c5d1-70b5-4d09-98a8-fadbf5e2d2ba)).
+  CC BY krever at kilden krediteres, og det er gjort i README. Lisensen kan variere
+  mellom NORA3-produktene, så sjekk lisensfeltet for hvert produkt som brukes
+  (vind, bølger, atmosfære).
+- **Status:** ✅ Referansen og krediteringen står i README.
+- **Gjenstår:** Haakenstad mfl. (2021) dekker atmosfæredelen. Bølgedataene (Hs, Tp)
+  kommer fra NORA3-bølgehindcasten, som har en egen referanse. Den er ikke funnet ennå.
 
 ---
 
@@ -655,8 +661,15 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Justus et al. (1978): sjekk likn. (15)–(16) (s. 351)
 - [x] Charnock (1955): sjekk relasjonen z₀ = α u*²/g (s. 639)
 - [x] Legg turbinkildene inn i `turbines.cfg` (tallene sjekket mot rapportene)
-- [ ] Legg NORA3-referansen og krediteringen inn i README
-- [ ] Rett docstringene i `turbulence.py` («etter prinsippet i Annex M») og `stability.py` (Launiainen, Gryning)
+- [x] Legg NORA3-referansen og krediteringen inn i README
+- [ ] NORA3-bølgedataene (Hs, Tp): finn og legg inn referansen for bølgedelen av NORA3
+- [x] Rett docstringene i `turbulence.py` (Albers, Annex M) og `stability.py` (Launiainen, Gryning)
+- [x] Fairall et al. (2003): sjekk faktoren 0,98 (s. 573)
+- [x] Carroll et al. (2016): sjekk feilrate og reparasjonstid (s. 1110, 1117); feilraten endret til 8,3
+- [x] Wöhler-eksponent for blader, m = 10: DTU 10 MW-rapporten, s. 74
+- [ ] Wöhler-eksponent for stål: avklar m = 4 eller m = 3 (DTU-rapporten bruker m = 3)
+- [ ] H_s < 2 m for tilgang: finn kilde eller behold som egen antagelse
+- [ ] Kjør testene (`pip install -e .[test]` og `pytest`) før pull request
 
 ### Slik sjekkes kildene
 
