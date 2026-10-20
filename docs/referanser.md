@@ -280,9 +280,19 @@ middelverdier (ikke flukser) er tilgjengelig.
   Journal of the Royal Meteorological Society* 81(350), 639–640.
   [doi:10.1002/qj.49708135027](https://doi.org/10.1002/qj.49708135027)
 - **Brukt i:** `stability.py`, kun i kommentaren ved `SEA_ROUGHNESS`
-- **Hvorfor nevnt:** Forklarer at havets ruhet egentlig øker med vinden og bølgene
-  (z₀ = α u*²/g). Vi bruker en fast z₀ i stedet, siden Ri_b → z/L er lite følsom for z₀.
-- **Status:** ✅
+- **Hvor i artikkelen:** S. 639, sammendraget: z(0) «was largely determined by
+  u*», og «g z(0)/u*² = constant». Dette er Charnock-relasjonen z₀ = α u*²/g.
+- **Hvorfor nevnt:** Forklarer at havets ruhet egentlig øker med friksjonshastigheten
+  u*, altså med vinden. Den fysiske tolkningen er at sterkere vind gir ruere
+  overflate (bølger), men det skriver ikke Charnock selv. Vi bruker en fast z₀ i
+  stedet, siden ln(z/z₀) og dermed Ri_b → z/L endrer seg relativt lite med z₀.
+- **Rimelighetssjekk:** Med α ≈ 0,011 (vanlig verdi i senere litteratur, ikke fra
+  denne artikkelen) og u* ≈ 0,4 m/s (moderat vind) blir z₀ ≈ 0,0002 m, som er
+  verdien koden bruker.
+- **Begrensning:** Charnocks målinger er fra et reservoar (1,6 × 1 km), i de
+  nederste 8 m, ikke fra åpent hav. Relasjonen er likevel blitt standard for hav.
+- **Status:** ✅ Sjekket mot artikkelen. Kommentaren i koden er presisert fra
+  «grows with the waves» til «grows with the friction velocity».
 - **Kan brukes:** Ja.
 
 ---
@@ -573,6 +583,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
 - [x] Bendat (1964): sjekk likningen for E[S^m] (likn. 80–82)
 - [x] Justus et al. (1978): sjekk likn. (15)–(16) (s. 351)
+- [x] Charnock (1955): sjekk relasjonen z₀ = α u*²/g (s. 639)
 - [ ] Legg turbinkildene inn i `turbines.cfg`
 - [ ] Legg NORA3-referansen og krediteringen inn i README
 - [ ] Rett docstringene i `turbulence.py` («etter prinsippet i Annex M») og `stability.py` (Launiainen, Gryning)

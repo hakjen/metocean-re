@@ -29,7 +29,9 @@ R_AIR = 287.05  # gas constant of dry air [J/(kg K)]
 VON_KARMAN = 0.4
 
 # Roughness length of the sea surface [m]. A typical open-sea value; in
-# reality it grows with the waves (Charnock 1955), which is ignored here.
+# reality it grows with the friction velocity, z0 = alpha u*^2 / g
+# (Charnock 1955, p. 639), which is ignored here. With alpha ~ 0.011 and
+# u* ~ 0.4 m/s (moderate wind) this gives about 2e-4 m.
 SEA_ROUGHNESS = 2e-4
 
 # Stability classes from the Obukhov length L [m], after Gryning et al.
