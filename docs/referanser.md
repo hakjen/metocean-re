@@ -137,12 +137,21 @@ middelverdier (ikke flukser) er tilgjengelig.
 - **Referanse:** Bolton, D. (1980). The computation of equivalent potential
   temperature. *Monthly Weather Review* 108(7), 1046–1053.
   [doi:10.1175/1520-0493(1980)108<1046:TCOEPT>2.0.CO;2](https://doi.org/10.1175/1520-0493(1980)108%3C1046:TCOEPT%3E2.0.CO;2)
-- **Brukt i:** `stability.py: saturation_vapour_pressure`
-- **Likning:** e_s = 6,112 exp(17,67 T / (T + 243,5)) hPa (T i °C). Koden bruker Pa (611,2).
-- **Hvorfor denne:** Enkel, eksplisitt og nøyaktig (~0,1 %) i temperaturområdet
-  vi har over Nordsjøen. Mye brukt i meteorologi.
+- **Brukt i:** `stability.py: saturation_vapour_pressure`, `specific_humidity`
+- **Likning i koden:** e_s = 6,112 exp(17,67 T / (T + 243,5)) hPa (T i °C). Koden bruker Pa (611,2).
+- **Hvor i artikkelen:**
+  - S. 1047, underavsn. f «Saturated vapor pressure of water», høyre kolonne,
+    likn. (10): e_s(T) = 6.112 exp(17.67 T / (T + 243.5)), T i °C, e_s i mb (= hPa).
+    Stemmer med koden.
+  - S. 1047, rett over likn. (10): tilpasset Wexler (1976) med nøyaktighet 0,1 %
+    for −30 °C ≤ T ≤ 35 °C. Dekker temperaturene over Nordsjøen.
+  - S. 1047, venstre kolonne, «d. Water vapor»: ε = R_d/R_v = 0,6220. Dette er
+    konstanten 0,622 (og 0,378 = 1 − 0,622) i `specific_humidity`.
+- **Hvorfor denne:** Enkel, eksplisitt og nøyaktig i temperaturområdet vi har.
+  Den eldre Tetens-formelen, likn. (8) på samme side, har 2 % feil ved −30 °C.
+  Bolton laget likn. (10) som en forbedring, og den er standardvalget i meteorologi.
 - **Hvor:** Fritt tilgjengelig hos AMS (journals.ametsoc.org).
-- **Status:** ✅ 🔶 Likningsnummer (10) må sjekkes.
+- **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
 ### Launiainen (1995)
@@ -547,7 +556,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [x] Albers (2010): artikkelen funnet og likn. (1) sjekket
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
-- [ ] Bolton (1980): sjekk likning (10)
+- [x] Bolton (1980): sjekk likning (10) (s. 1047)
 - [x] Burton et al. (2021, 3. utg.): sjekk avsnitt 3.2 (likn. 3.12, 3.13, 3.16)
 - [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
 - [x] Bendat (1964): sjekk likningen for E[S^m] (likn. 80–82)

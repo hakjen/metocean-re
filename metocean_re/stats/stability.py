@@ -61,14 +61,19 @@ def saturation_vapour_pressure(temperature):
     """
     Saturation vapour pressure [Pa] over water at temperature [K].
 
-    Source: Bolton (1980), Monthly Weather Review 108, 1046-1053, eq. (10).
+    Source: Bolton (1980), Monthly Weather Review 108, 1046-1053, eq. (10),
+    p. 1047. Accurate to 0.1 % for -30 C <= T <= 35 C.
     """
     t_celsius = temperature - 273.15
     return 611.2 * np.exp(17.67 * t_celsius / (t_celsius + 243.5))
 
 
 def specific_humidity(temperature, relative_humidity, pressure):
-    """Specific humidity [kg/kg] from temperature [K], relative humidity [0-1] and pressure [Pa]."""
+    """
+    Specific humidity [kg/kg] from temperature [K], relative humidity [0-1] and pressure [Pa].
+
+    0.622 = R_d / R_v (Bolton 1980, p. 1047) and 0.378 = 1 - 0.622.
+    """
     e = relative_humidity * saturation_vapour_pressure(temperature)
     return 0.622 * e / (pressure - 0.378 * e)
 
