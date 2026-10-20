@@ -363,13 +363,25 @@ middelverdier (ikke flukser) er tilgjengelig.
   Methods for estimating wind speed frequency distributions. *J. Applied
   Meteorology* 17(3), 350–353.
   [doi:10.1175/1520-0450(1978)017<0350:MFEWSF>2.0.CO;2](https://doi.org/10.1175/1520-0450(1978)017%3C0350:MFEWSF%3E2.0.CO;2)
-- **Brukt i:** `wind_power.py: fit_weibull`
-- **Likning:** k = (σ/ū)^(−1,086), c = ū / Γ(1 + 1/k)
-- **Hvorfor denne:** Enkel og eksplisitt (ingen iterasjon), og god for 1 ≤ k ≤ 10,
-  som dekker vind over hav (k ≈ 2). Alternativet er maximum likelihood
-  (`scipy.stats.weibull_min.fit`), som er mer nøyaktig, men tregere og mindre gjennomsiktig.
-- **Hvor:** Fritt tilgjengelig hos AMS.
-- **Status:** ✅
+- **Brukt i:** `wind_power.py: fit_weibull`, `weibull_pdf`
+- **Likning i koden:** k = (σ/ū)^(−1,086), c = ū / Γ(1 + 1/k)
+- **Hvor i artikkelen:**
+  - Avsn. 2c «Mean wind speed and standard deviation – Method 3», s. 351, høyre
+    kolonne: likn. (13) V̄ = c Γ(1 + 1/k), likn. (14) den eksakte sammenhengen
+    mellom σ/V̄ og k, **likn. (15) k = (σ/V̄)^(−1.086)** som tilnærming til (14), og
+    **likn. (16) c = V̄/Γ(1 + 1/k)**. Stemmer med koden.
+  - S. 351: σ² = ⟨(V − V̄)²⟩, altså populasjonsstandardavviket, som er det
+    `numpy.std()` gir som standard.
+  - S. 350, likn. (1): Weibull-fordelingen. Stemmer med `weibull_pdf`.
+  - S. 352, høyre kolonne: maximum likelihood (Takle og Brown 1977) er
+    «potentially more accurate but somewhat more difficult to apply».
+- **Hvorfor denne:** Enkel og eksplisitt (ingen iterasjon) og trenger bare
+  middelverdi og standardavvik. Alternativet er maximum likelihood
+  (`scipy.stats.weibull_min.fit`), som kan være mer nøyaktig, men er tregere og mindre gjennomsiktig.
+- **Merk:** Tabell 2 (s. 352) tester metodene 1, 4 og 5, ikke metode 3, så
+  artikkelen gir ikke et mål på nøyaktigheten til likn. (15).
+- **Hvor:** Fritt tilgjengelig hos AMS / JSTOR.
+- **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
 ### Referanseturbinene (`turbines.cfg`)
@@ -560,6 +572,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Burton et al. (2021, 3. utg.): sjekk avsnitt 3.2 (likn. 3.12, 3.13, 3.16)
 - [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
 - [x] Bendat (1964): sjekk likningen for E[S^m] (likn. 80–82)
+- [x] Justus et al. (1978): sjekk likn. (15)–(16) (s. 351)
 - [ ] Legg turbinkildene inn i `turbines.cfg`
 - [ ] Legg NORA3-referansen og krediteringen inn i README
 - [ ] Rett docstringene i `turbulence.py` («etter prinsippet i Annex M») og `stability.py` (Launiainen, Gryning)
