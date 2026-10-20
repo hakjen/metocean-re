@@ -55,9 +55,32 @@ Ingen likninger er ennå sjekket mot originalteksten. Det gjenstår (se [sjekkli
   performance measurements. *Wind Energy* 12(4), 348–362.
   [doi:10.1002/we.297](https://doi.org/10.1002/we.297)
 - **Brukt i:** `profile.py: rotor_equivalent_wind_speed`
+- **Hvor i artikkelen** (ingen avsnittsnumre, så sidetall og likninger brukes):
+  - Likn. (4)–(6), s. 351 (innledningen): tre definisjoner av «equivalent wind speed»
+    - (4) U_eqM1 = Σ (A_i/A) U_i, vektet middel
+    - (5) U_eqT1, som (4) med turbulensleddet fra likn. (3)
+    - **(6) U_eqT3 = ( Σ (A_i/A) U_i³ )^(1/3)**, samme energifluks gjennom rotorarealet
+  - Figur 2, s. 352: rotoren delt i horisontale segmenter (5 i figuren, 10 i simuleringene, s. 358)
+  - S. 352: likn. (4)–(6) antar «zero tilt and yaw errors»
+  - Sammendraget (s. 348) og konklusjonen (s. 362): effekten korrelerer klart
+    bedre med den ekvivalente vindhastigheten enn med vinden i navhøyde
+- **Sammenligning med koden:** Koden bruker likn. (6) uten turbulensleddet
+  (turbulens behandles for seg i `turbulence.py`), med 20 horisontale striper.
+  Formen stemmer.
+  - Vindvridning (cos Δφ) er **ikke** med hos Wagner. Retning nevnes bare som
+    videre arbeid (s. 361). Veer-delen må derfor henvise til IEC 61400-12-1.
+  - Tilt: Wagner antar ingen tilt, og det gjør REWS i koden også. Tilt er et eget
+    tap i `wind_losses.py: power_with_tilt` og kombineres ikke med REWS.
+  - Merk (s. 358): i Wagners simuleringer passet likn. (4) best og likn. (6)
+    dårligst. Forfatterne sier at dette avhenger av turbinkontrolleren (konstant
+    turtall og pitch). Det er u³-formen, likn. (6), som er tatt inn i IEC
+    61400-12-1, så IEC er hovedkilden for formelen og Wagner for ideen.
 - **Hvorfor denne:** Originalartikkelen som viser at vind bare i navhøyde ikke er
-  nok, og som foreslår REWS. IEC-definisjonen bygger på dette arbeidet.
-- **Status:** ✅ (publisert på nett 2008, trykt i volum 12, 2009, så 2009 er riktig å oppgi)
+  nok, og som foreslår en ekvivalent vindhastighet over hele rotoren.
+  IEC-definisjonen bygger på dette arbeidet.
+- **Hvor:** Wiley Online Library via UiB.
+- **Status:** ✅ Sjekket mot artikkelen. Publisert på nett 2008, trykt i volum 12
+  (2009), så 2009 er riktig å oppgi.
 - **Kan brukes:** Ja.
 
 ### Power law (interpolasjon mellom NORA3-høydene)
@@ -395,6 +418,7 @@ Ting som gjenstår (kryss av når det er gjort):
 
 - [ ] Bestem utgave av IEC 61400-12-1 (2017 eller 2022) og sjekk Annex M og avsnittet om tetthetskorreksjon
 - [ ] IEC 61400-1:2019: sjekk avsnitt for NTM, Tabell 1 (vurder klasse A+) og Annex C (σ-forhold)
+- [x] Wagner et al. (2009): sjekk at REWS-formelen står der (likn. 6, s. 351)
 - [ ] Gryning et al. (2007): sjekk klassegrensene i Tabell 1
 - [ ] Albers (2010): finn artikkelen eller bruk bare IEC som kilde
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6

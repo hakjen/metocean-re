@@ -171,8 +171,9 @@ def rotor_equivalent_wind_speed(data, turbine=None, include_veer=False, n_strips
     the hub (wind veer); it is only used with include_veer=True.
 
     Source: IEC 61400-12-1:2017, Power performance measurements of
-    electricity producing wind turbines (REWS definition, incl. veer);
-    Wagner et al. (2009), Wind Energy 12(4), 348-362.
+    electricity producing wind turbines (REWS definition, incl. veer).
+    The idea and the form without veer: Wagner et al. (2009), Wind Energy
+    12(4), 348-362, eq. (6), which assumes no tilt or yaw error.
     """
     t = turbines.get(turbine)
     centres, weights = _rotor_strips(n_strips)
