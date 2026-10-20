@@ -45,7 +45,9 @@ def thrust_coefficient(turbine, wind_speed, air_density=1.225):
     so a is found from C_P, and C_T from a. Outside cut-in - cut-out the
     rotor is idling and C_T = 0.
 
-    Source: Burton et al. (2011), Wind Energy Handbook, 2nd ed., Wiley, sec. 3.2.
+    Source: Burton et al. (2021), Wind Energy Handbook, 3rd ed., Wiley,
+    sec. 3.2, eqs. (3.12), (3.13) and (3.16). Momentum theory does not apply
+    for a >= 1/2 (p. 44); here a <= 1/3.
     Note: ideal theory gives a lower C_T below rated speed than real
     turbines (which lose some power to drag and the drivetrain).
     """

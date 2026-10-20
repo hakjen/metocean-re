@@ -448,16 +448,29 @@ Disse må enten få en kilde eller beskrives tydelig som antagelser:
 
 ## 6. Laster (`wind_loads.py`)
 
-### Burton et al. (2011) – aktuator-disk-teori
+### Burton et al. (2021) – aktuator-disk-teori
 
-- **Referanse:** Burton, T., Jenkins, N., Sharpe, D., Bossanyi, E. (2011). *Wind
-  Energy Handbook*, 2nd ed. Wiley. doi:10.1002/9781119992714
+- **Referanse:** Burton, T., Jenkins, N., Bossanyi, E., Sharpe, D., Graham, M.
+  (2021). *Wind Energy Handbook*, 3rd ed. Wiley.
+  [doi:10.1002/9781119451143](https://doi.org/10.1002/9781119451143)
+  (Koden henviste tidligere til 2. utgave, 2011. Byttet til 3. utgave, som er den
+  som er sjekket. Avsnittsnummeret er det samme.)
 - **Brukt i:** `wind_loads.py: thrust_coefficient`
-- **Likninger:** C_P = 4a(1−a)², C_T = 4a(1−a), Betz-grensen C_P ≤ 16/27
+- **Likninger i koden:** C_P = 4a(1−a)², C_T = 4a(1−a), Betz-grensen C_P ≤ 16/27,
+  a funnet fra C_P på 0 ≤ a ≤ 1/3
+- **Hvor i boka** (kap. 3 «Aerodynamics of horizontal axis wind turbines»):
+  - Avsn. 3.2 «The actuator disc concept», s. 41–42, likn. (3.2): U_D = U∞(1 − a)
+  - Avsn. 3.2.2, s. 43, likn. (3.12): C_P = 4a(1 − a)²
+  - Avsn. 3.2.3, s. 43, likn. (3.13): maks ved a = 1/3, C_P,max = 16/27 ≈ 0,593 (Betz-grensen)
+  - Avsn. 3.2.4, s. 44, likn. (3.16): C_T = 4a(1 − a)
+  - S. 44, under likn. (3.16): momentumteorien gjelder ikke for a ≥ 1/2. Koden
+    bruker bare a ≤ 1/3 og er godt innenfor.
 - **Hvorfor denne:** Vi har bare effektkurven, ikke en C_T-kurve. Aktuator-disk-teorien
   gir C_T fra C_P via induksjonsfaktoren a. Det er den enkleste fysisk konsistente
-  koblingen. Den undervurderer C_T under nominell vind (står i docstringen).
-- **Status:** 🔶 Avsnitt 3.2 må sjekkes.
+  koblingen. Den undervurderer C_T under nominell vind fordi ideell teori ikke tar
+  med tap (står i docstringen).
+- **Hvor:** Wiley Online Library via UiB (kapittel 3 som PDF).
+- **Status:** ✅ Sjekket mot boka (3. utgave).
 - **Kan brukes:** Ja, standard lærebok.
 
 ### Bendat (1964) – utmatting
@@ -521,7 +534,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Albers (2010): artikkelen funnet og likn. (1) sjekket
 - [x] Stull (1988): sjekk kapittel 1 og avsnitt 5.6
 - [ ] Bolton (1980): sjekk likning (10)
-- [ ] Burton et al. (2011): sjekk avsnitt 3.2
+- [x] Burton et al. (2021, 3. utg.): sjekk avsnitt 3.2 (likn. 3.12, 3.13, 3.16)
 - [x] Holthuijsen (2007): sjekk kapittel 5 (likn. 5.4.18, s. 123)
 - [ ] Bendat (1964): sjekk likningen for E[S^m]
 - [ ] Legg turbinkildene inn i `turbines.cfg`
