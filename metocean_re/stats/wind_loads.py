@@ -24,7 +24,9 @@ from .turbulence import hub_height_sigma_u
 from .profile import hub_height_wind_speed, rotor_wind_speeds, value_at_height
 
 # Wohler (S-N curve) exponents: typical values for welded steel (tower) and
-# glass-fibre composites (blades).
+# glass-fibre composites (blades). m = 10 for the blades as in Bak et al.
+# (2013), DTU Wind Energy Report-I-0092, sec. 6.4.4, p. 74, which uses
+# m = 3 for steel; m = 4 for steel is an assumption without a source yet.
 WOHLER_STEEL = 4
 WOHLER_COMPOSITE = 10
 

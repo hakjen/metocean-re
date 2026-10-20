@@ -420,7 +420,9 @@ tall per turbin: nominell effekt, cut-in, nominell vind, cut-out, navhøyde og r
 - **Hvorfor denne:** Den trenger bare fire tall per turbin og er lett å forstå.
   Ulempen er at den ikke viser at C_P avtar mot nominell vind. Referanserapportene
   over har ekte effektkurver som tabeller, og de kunne erstattet modellen.
-- **Kilde:** Egen forenkling. Må omtales som en antagelse.
+- **Kilde:** Egen forenkling. Må omtales som en antagelse. Albers (2010), figur 1,
+  bruker samme form (P ∝ v³ fra cut-in til nominell effekt) som første steg for en
+  null-turbulens-effektkurve, så formen har noe støtte.
 
 ---
 
@@ -468,18 +470,22 @@ tall per turbin: nominell effekt, cut-in, nominell vind, cut-out, navhøyde og r
 
 ### Egne antagelser uten kilde
 
-Disse må enten få en kilde eller beskrives tydelig som antagelser:
+Verdiene er delt i tre: **løst** (har fått kilde eller støtte), **trenger kilde**
+(påvirker resultatene og ser ut som fakta) og **egen antagelse** (bevisste valg,
+avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antagelser).
 
-| Verdi / modell | Brukt i | Merknad / mulig kilde |
-|---|---|---|
-| Elektrisk tap 2 % | `electrical_loss` | Typisk verdi. Mulig kilde: tapsoversikter i AEP-metodikk, f.eks. DNV eller IEA Wind. |
-| 6 feil/år, 12 t reparasjon, H_s < 2 m | `weather_maintenance_loss` | Feilrater: Carroll, J., McDonald, A., McMillan, D. (2016). Failure rate, repair time and unscheduled O&M cost analysis of offshore wind turbines. *Wind Energy* 19(6), 1107–1119. [doi:10.1002/we.1887](https://doi.org/10.1002/we.1887) ✅. Grensen H_s ≈ 1,5–2 m er typisk for CTV-fartøy. |
-| Fast vedlikehold 14 dager/år | `availability_loss` | Fra veileders notat. Oppgi det som kilde. |
-| Restart under 20 m/s etter stormstopp | `power_with_hysteresis` | Typisk verdi, ikke fra en bestemt turbin. |
-| Rotoren ser u·cos θ | `power_with_tilt` | Enkel geometri. Litteraturen bruker cos² eller cos³ på *effekten*, og vår modell tilsvarer cos³ under nominell vind. |
-| Fast vinkel 5°, bølgerespons 1,0 | `wind_losses.py`, eksempelskriptet | Respons 1,0 er en øvre grense. |
-| z₀ = 0,0002 m, z₀h = z₀ | `stability.py: SEA_ROUGHNESS` | Typisk verdi for åpent hav. Se Charnock. |
-| 98 % relativ fuktighet over saltvann | `bulk_richardson` | Vanlig antagelse (saltvann senker metningstrykket med ~2 %). |
+| Verdi / modell | Brukt i | Status | Merknad / mulig kilde |
+|---|---|---|---|
+| z₀ = 0,0002 m | `stability.py: SEA_ROUGHNESS` | ✅ Løst | Tilsvarer Charnock-relasjonen ved moderat vind (se Charnock). |
+| z₀h = z₀ | `stability.py: _richardson_from_zeta` | ✅ Løst | Launiainen (1995), avsn. 2.2: gjelder over hav i svak til moderat vind. |
+| 6 feil/år, 12 t reparasjon | `weather_maintenance_loss` | 🔶 Trenger kilde | Carroll, J., McDonald, A., McMillan, D. (2016). Failure rate, repair time and unscheduled O&M cost analysis of offshore wind turbines. *Wind Energy* 19(6), 1107–1119. [doi:10.1002/we.1887](https://doi.org/10.1002/we.1887). Finnes via UiB, ikke lastet ned ennå. |
+| H_s < 2 m for tilgang | `weather_maintenance_loss` | 🔶 Trenger kilde | Resultatet er svært følsomt for denne verdien. Grensen for vanlige servicefartøy (CTV) er ofte 1,5–2 m. Kanskje i Carroll, ellers en DNV-kilde. |
+| 98 % relativ fuktighet over saltvann | `bulk_richardson` | 🔶 Trenger kilde | Saltvann senker metningstrykket med ca. 2 %. Faktoren 0,98 brukes i standard algoritmer for fluks over hav (COARE, Fairall mfl.). Må sjekkes. |
+| Elektrisk tap 2 % | `electrical_loss` | Egen antagelse | Typisk verdi (1–3 %). En kilde ville styrket den. NB: generatorvirkningsgraden (94,4 % i NREL 5 MW-rapporten) er ikke det samme. Den er allerede med i effektkurven. |
+| Fast vedlikehold 14 dager/år | `availability_loss` | Egen antagelse | Avtalt med veileder («ca. 2 uker minus i året»). Oppgis som «etter avtale med veileder (MET)». |
+| Restart under 20 m/s etter stormstopp | `power_with_hysteresis` | Egen antagelse | Typisk verdi til illustrasjon, ikke fra en bestemt turbin. |
+| Rotoren ser u·cos θ | `power_with_tilt` | Egen antagelse | Enkel geometri. Litteraturen bruker cos² eller cos³ på *effekten*, og vår modell tilsvarer cos³ under nominell vind. |
+| Fast vinkel 5°, bølgerespons 1,0 | `wind_losses.py`, eksempelskriptet | Egen antagelse | Scenariovalg. Respons 1,0 er en bevisst øvre grense. |
 
 ---
 
@@ -540,11 +546,12 @@ Disse må enten få en kilde eller beskrives tydelig som antagelser:
 
 ### Egne antagelser uten kilde
 
-| Verdi / modell | Brukt i | Merknad |
-|---|---|---|
-| Wöhler-eksponent m = 4 (stål), m = 10 (kompositt) | `WOHLER_STEEL`, `WOHLER_COMPOSITE` | Typiske verdier. Mulig kilde: DNV-RP-C203 (stål), DNV-ST-0376 (vinger). |
-| σ_F = ρ A C_T U σ_u | `thrust_std` | Kvasistatisk linearisering (dF/du · σ_u). Egen utledning, vis den i docstringen. |
-| (u_topp² − u_bunn²) / u_nav² | `rotor_load_asymmetry` | Egen enkel indikator, ikke en standardstørrelse. |
+| Verdi / modell | Brukt i | Status | Merknad |
+|---|---|---|---|
+| Wöhler-eksponent m = 10 (kompositt, blader) | `WOHLER_COMPOSITE` | ✅ Løst | DTU 10 MW-rapporten (Bak mfl. 2013), avsn. 6.4.4, s. 74: «For the blade loads a Wöhler exponent of m = 10 has been used.» |
+| Wöhler-eksponent m = 4 (stål, tårn) | `WOHLER_STEEL` | ⚠️ Avvik | Samme sted i DTU-rapporten: «Other components are assumed to be steel, m = 3.» DNV-RP-C203 bruker også m = 3 (og m = 5 ved mange sykluser) for sveiset stål. m = 4 er vanlig i vindlast-studier, men har ingen kilde ennå. **Valg:** bytte til m = 3 med DTU som kilde, eller beholde m = 4 og finne en kilde. Avklares med veileder. |
+| σ_F = ρ A C_T U σ_u | `thrust_std` | Egen antagelse | Kvasistatisk linearisering (dF/du · σ_u). Matematisk utledning, vis den i docstringen. |
+| (u_topp² − u_bunn²) / u_nav² | `rotor_load_asymmetry` | Egen antagelse | Egen enkel indikator, ikke en standardstørrelse. |
 
 ---
 
