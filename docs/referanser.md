@@ -420,8 +420,9 @@ Mangler kilde i koden i dag. Verdiene i filen stemmer med rapportene:
     teorien bør ikke brukes for bratte bølger.
 - **Hvorfor denne:** Dypvannsrelasjonen er eksplisitt og gjelder når dybden er mer
   enn omtrent halve bølgelengden. Med Tp = 15 s gir likn. (5.4.18) L₀ ≈ 350 m, så
-  dybden bør være over ca. 175 m. Utsira Nord er etter det vi vet rundt 200–280 m
-  dypt (bør sjekkes i en kilde om feltet).
+  dybden bør være over ca. 175 m. Havdybden på Utsira Nord er 250–280 m
+  (Equinor, equinor.com/no/energi/utsira-nord). Med d = 250 m holder
+  dypvannsformen (d > L/2) for Tp under ca. 18 s, altså praktisk talt alle bølger.
 - **Begrensning:** ⚠️ Boka beskriver en regulær bølge med høyde H. At vi setter
   H = H_s for en uregelmessig sjø, er vår forenkling og står ikke i boka.
 - **Hvor:** Cambridge Core via UiB (kapittel 5 som PDF).
