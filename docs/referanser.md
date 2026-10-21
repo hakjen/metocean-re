@@ -293,6 +293,16 @@ middelverdier (ikke flukser) er tilgjengelig.
   - Ulempe: L er minst sikker nettopp her (−5ζ er for sterk ved sterk stabilitet,
     se Launiainen og Dyer). Med z/L begrenset til [−100, 10] i 50 m blir L aldri
     mindre enn 5 m på stabil side eller nærmere 0 enn −0,5 m på ustabil side.
+  - **Hvor mye betyr utvidelsen?** I testdatasettet (Utsira Nord 2020–2022,
+    26 304 timer) havner 23,4 % av tidsstegene i −50 < L < 0 og 2,1 % i
+    0 < L < 10, altså utenfor Grynings grenser. Nesten to tredjedeler av
+    «very unstable» (37,3 % av tiden) er dermed utvidelse. Disse tidsstegene har
+    mest svak vind (5,5 % av energien), men høy turbulens, og står for ca. 20 % av
+    utmattingsskaden på stål. Totalene endres ikke, bare fordelingen på klasser i
+    `plot_stability_by_month`, `plot_stability_effects`, `plot_losses_by_stability`,
+    `plot_loads_by_stability`, `plot_obukhov_validation` og tabellene. Ved
+    sammenligning med Gryning eller andre studier bør dette nevnes. Et alternativ
+    er å vise −50 < L < 0 som en egen klasse.
 - **Begrensning:** Datagrunnlaget er fra land (Høvsøre, sektoren fra land, og
   Hamburg), med L målt i 10–12 m (Tabell 1). Vi beregner L fra Ri_b i 50 m over
   hav. Klasseinndelingen brukes mye offshore også.
@@ -522,6 +532,8 @@ tall per turbin: nominell effekt, cut-in, nominell vind, cut-out, navhøyde og r
   brukes materiell (s. 1117), også små feil. Koden lar alle feil stoppe turbinen
   til et værvindu er funnet, og bruker samme Hs-grense for alle, selv om store
   utskiftinger krever andre fartøy (Tabell I). Hs-grensen står ikke i Carroll.
+- **Effekt av endringen:** Vedlikeholdstapet for IEA 15 MW i testdatasettet økte
+  fra 5,66 % (6 feil/år) til 7,83 % (8,3 feil/år).
 - **Status:** ✅ Sjekket mot artikkelen.
 - **Kan brukes:** Ja.
 
@@ -669,7 +681,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Wöhler-eksponent for blader, m = 10: DTU 10 MW-rapporten, s. 74
 - [ ] Wöhler-eksponent for stål: avklar m = 4 eller m = 3 (DTU-rapporten bruker m = 3)
 - [ ] H_s < 2 m for tilgang: finn kilde eller behold som egen antagelse
-- [ ] Kjør testene (`pip install -e .[test]` og `pytest`) før pull request
+- [x] Kjør testene (`pip install -e .[test]` og `pytest`): 48 av 48 passerer
 
 ### Slik sjekkes kildene
 
