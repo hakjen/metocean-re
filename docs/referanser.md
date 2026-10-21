@@ -301,8 +301,10 @@ middelverdier (ikke flukser) er tilgjengelig.
     utmattingsskaden på stål. Totalene endres ikke, bare fordelingen på klasser i
     `plot_stability_by_month`, `plot_stability_effects`, `plot_losses_by_stability`,
     `plot_loads_by_stability`, `plot_obukhov_validation` og tabellene. Ved
-    sammenligning med Gryning eller andre studier bør dette nevnes. Et alternativ
-    er å vise −50 < L < 0 som en egen klasse.
+    sammenligning med Gryning eller andre studier bør dette nevnes. En egen klasse
+    for −50 < L < 0 er vurdert, men ikke valgt: den nøyaktige verdien av L er for
+    usikker her til at et skille gir mening, mens at timene er svært ustabile er
+    tydelig.
 - **Begrensning:** Datagrunnlaget er fra land (Høvsøre, sektoren fra land, og
   Hamburg), med L målt i 10–12 m (Tabell 1). Vi beregner L fra Ri_b i 50 m over
   hav. Klasseinndelingen brukes mye offshore også.
