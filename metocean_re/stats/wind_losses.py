@@ -112,8 +112,8 @@ def weather_maintenance_loss(data, turbine=None, failures_per_year=8.3, repair_h
     Energy 19, 1107-1119: 8.3 failures per turbine per year (sec. 5.1,
     p. 1110), and 12 h as the mean repair time weighted by failure rate
     (Table II, p. 1117: minor 6.7 h, major 17.6 h, replacement 116 h; the
-    repair time excludes travel and waiting for access). Hs < 2.0 m is an
-    assumption. The result depends strongly on hs_limit - see
+    repair time excludes travel and waiting for access). The access limit
+    Hs < 2.0 m is our own assumption. The result depends strongly on hs_limit - see
     plots.plot_maintenance_downtime().
     """
     t = turbines.get(turbine)

@@ -297,8 +297,8 @@ middelverdier (ikke flukser) er tilgjengelig.
     26 304 timer) havner 23,4 % av tidsstegene i −50 < L < 0 og 2,1 % i
     0 < L < 10, altså utenfor Grynings grenser. Nesten to tredjedeler av
     «very unstable» (37,3 % av tiden) er dermed utvidelse. Disse tidsstegene har
-    mest svak vind (5,5 % av energien), men høy turbulens, og står for ca. 20 % av
-    utmattingsskaden på stål. Totalene endres ikke, bare fordelingen på klasser i
+    mest svak vind (5,5 % av energien), men høy turbulens, og står for ca. 18 % av
+    utmattingsskaden på stål (m = 3). Totalene endres ikke, bare fordelingen på klasser i
     `plot_stability_by_month`, `plot_stability_effects`, `plot_losses_by_stability`,
     `plot_loads_by_stability`, `plot_obukhov_validation` og tabellene. Ved
     sammenligning med Gryning eller andre studier bør dette nevnes. En egen klasse
@@ -550,7 +550,7 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
 | z₀ = 0,0002 m | `stability.py: SEA_ROUGHNESS` | ✅ Løst | Tilsvarer Charnock-relasjonen ved moderat vind (se Charnock). |
 | z₀h = z₀ | `stability.py: _richardson_from_zeta` | ✅ Løst | Launiainen (1995), avsn. 2.2: gjelder over hav i svak til moderat vind. |
 | 8,3 feil/år, 12 t reparasjon | `weather_maintenance_loss`, `annual_energy_losses`, `plot_maintenance_downtime` | ✅ Løst | Carroll mfl. (2016), se egen oppføring under. Feilraten er endret fra 6 til 8,3 etter avtale med Håkon, slik at den stemmer med kilden. 12 t er uendret og stemmer med Carrolls vektede gjennomsnitt (≈ 12,1 t). |
-| H_s < 2 m for tilgang | `weather_maintenance_loss` | 🔶 Trenger kilde | Resultatet er svært følsomt for denne verdien. Grensen for vanlige servicefartøy (CTV) er ofte 1,5–2 m. Står ikke i Carroll (Tabell I nevner bare at CTV brukes). Trenger en annen kilde, f.eks. DNV. |
+| H_s < 2 m for tilgang | `weather_maintenance_loss` | Egen antagelse | Valgt som egen antagelse (avtalt). Står ikke i Carroll (Tabell I nevner bare at CTV brukes). Resultatet er svært følsomt for denne verdien, se `plot_maintenance_downtime` (høyre panel). |
 | Faktor 0,98 for damptrykk over saltvann | `bulk_richardson` | ✅ Løst | Fairall mfl. (2003), se egen oppføring under avsn. 2. |
 | Elektrisk tap 2 % | `electrical_loss` | Egen antagelse | Typisk verdi (1–3 %). En kilde ville styrket den. NB: generatorvirkningsgraden (94,4 % i NREL 5 MW-rapporten) er ikke det samme. Den er allerede med i effektkurven. |
 | Fast vedlikehold 14 dager/år | `availability_loss` | Egen antagelse | Avtalt med veileder («ca. 2 uker minus i året»). Oppgis som «etter avtale med veileder (MET)». |
@@ -620,7 +620,7 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
 | Verdi / modell | Brukt i | Status | Merknad |
 |---|---|---|---|
 | Wöhler-eksponent m = 10 (kompositt, blader) | `WOHLER_COMPOSITE` | ✅ Løst | DTU 10 MW-rapporten (Bak mfl. 2013), avsn. 6.4.4, s. 74: «For the blade loads a Wöhler exponent of m = 10 has been used.» |
-| Wöhler-eksponent m = 4 (stål, tårn) | `WOHLER_STEEL` | ⚠️ Avvik | Samme sted i DTU-rapporten: «Other components are assumed to be steel, m = 3.» DNV-RP-C203 bruker også m = 3 (og m = 5 ved mange sykluser) for sveiset stål. m = 4 er vanlig i vindlast-studier, men har ingen kilde ennå. **Valg:** bytte til m = 3 med DTU som kilde, eller beholde m = 4 og finne en kilde. Avklares med veileder. |
+| Wöhler-eksponent m = 3 (stål, tårn) | `WOHLER_STEEL` | ✅ Løst | Samme sted i DTU-rapporten: «Other components are assumed to be steel, m = 3.» Endret fra m = 4, som ikke hadde kilde. |
 | σ_F = ρ A C_T U σ_u | `thrust_std` | Egen antagelse | Kvasistatisk linearisering (dF/du · σ_u). Matematisk utledning, vis den i docstringen. |
 | (u_topp² − u_bunn²) / u_nav² | `rotor_load_asymmetry` | Egen antagelse | Egen enkel indikator, ikke en standardstørrelse. |
 
@@ -681,8 +681,8 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Fairall et al. (2003): sjekk faktoren 0,98 (s. 573)
 - [x] Carroll et al. (2016): sjekk feilrate og reparasjonstid (s. 1110, 1117); feilraten endret til 8,3
 - [x] Wöhler-eksponent for blader, m = 10: DTU 10 MW-rapporten, s. 74
-- [ ] Wöhler-eksponent for stål: avklar m = 4 eller m = 3 (DTU-rapporten bruker m = 3)
-- [ ] H_s < 2 m for tilgang: finn kilde eller behold som egen antagelse
+- [x] Wöhler-eksponent for stål: endret fra m = 4 til m = 3 (DTU-rapporten, s. 74)
+- [x] H_s < 2 m for tilgang: beholdt som egen antagelse
 - [x] Kjør testene (`pip install -e .[test]` og `pytest`): 48 av 48 passerer
 
 ### Slik sjekkes kildene
