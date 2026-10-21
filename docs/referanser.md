@@ -633,15 +633,24 @@ avtalt med veileder eller enkel matematikk, som bare må stå tydelig som antage
   North Sea, the Norwegian Sea, and the Barents Sea. *J. Applied Meteorology and
   Climatology* 60(10), 1443–1464.
   [doi:10.1175/JAMC-D-21-0029.1](https://doi.org/10.1175/JAMC-D-21-0029.1) ✅
+- **NORA3-bølger:** Breivik, Ø., Carrasco, A., Haakenstad, H., Aarnes, O. J.,
+  Behrens, A., Bidlot, J.-R., Björkqvist, J.-V., Bohlinger, P., Furevik, B. R.,
+  Staneva, J., Reistad, M. (2022). The impact of a reduced high-wind Charnock
+  parameter on wave growth with application to the North Sea, the Norwegian Sea,
+  and the Arctic Ocean. *J. Geophysical Research: Oceans* 127(3), e2021JC018196.
+  [doi:10.1029/2021JC018196](https://doi.org/10.1029/2021JC018196) ✅
+  - Dekker bølgedataene (Hs, Tp) fra `NORA3_wave_sub`. MET sin bølgeside
+    ([ocean.met.no/waves](https://ocean.met.no/waves)) oppgir denne som referansen
+    for «The NORA3 wave hindcast (NORA3_wave)», laget med WAM 4.7.0 drevet av
+    NORA3-vind. Metadata sjekket mot Crossref.
 - **Brukt i:** README, `tests/data/NORA3_utsira_nord_2020_2022.csv`
 - **Lisens:** MET Norways datakatalog oppgir CC BY 4.0 for NORA3
   ([data.met.no](https://data.met.no/dataset/ddb4c5d1-70b5-4d09-98a8-fadbf5e2d2ba)).
   CC BY krever at kilden krediteres, og det er gjort i README. Lisensen kan variere
   mellom NORA3-produktene, så sjekk lisensfeltet for hvert produkt som brukes
   (vind, bølger, atmosfære).
-- **Status:** ✅ Referansen og krediteringen står i README.
-- **Gjenstår:** Haakenstad mfl. (2021) dekker atmosfæredelen. Bølgedataene (Hs, Tp)
-  kommer fra NORA3-bølgehindcasten, som har en egen referanse. Den er ikke funnet ennå.
+- **Status:** ✅ Begge referansene og krediteringen står i README. Haakenstad mfl.
+  (2021) dekker atmosfæredelen, Breivik mfl. (2022) bølgedelen.
 
 ---
 
@@ -676,7 +685,7 @@ Ting som gjenstår (kryss av når det er gjort):
 - [x] Charnock (1955): sjekk relasjonen z₀ = α u*²/g (s. 639)
 - [x] Legg turbinkildene inn i `turbines.cfg` (tallene sjekket mot rapportene)
 - [x] Legg NORA3-referansen og krediteringen inn i README
-- [ ] NORA3-bølgedataene (Hs, Tp): finn og legg inn referansen for bølgedelen av NORA3
+- [x] NORA3-bølgedataene (Hs, Tp): Breivik mfl. (2022), lagt inn i README
 - [x] Rett docstringene i `turbulence.py` (Albers, Annex M) og `stability.py` (Launiainen, Gryning)
 - [x] Fairall et al. (2003): sjekk faktoren 0,98 (s. 573)
 - [x] Carroll et al. (2016): sjekk feilrate og reparasjonstid (s. 1110, 1117); feilraten endret til 8,3
