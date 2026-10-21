@@ -209,7 +209,11 @@ def obukhov_length(data, z=50):
 
 
 def stability_class(obukhov_length):
-    """Stability class for each value of the Obukhov length L [m] (Series of ordered categories)."""
+    """
+    Stability class for each value of the Obukhov length L [m] (Series of ordered categories).
+
+    The classes follow Gryning et al. (2007), with the outermost classes extended to L = 0.
+    """
     L = pd.Series(obukhov_length, dtype=float)
     with np.errstate(divide="ignore"):
         inverse_L = 1 / L
