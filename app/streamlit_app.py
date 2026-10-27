@@ -148,7 +148,11 @@ if source == "Upload file":
     if not uploaded:
         st.info("Upload a file in the sidebar.")
         st.stop()
-    df = load_data(uploaded)
+    try:
+        df = load_data(uploaded)
+    except ValueError as error:
+        st.error(f"Could not read the file: {error}")
+        st.stop()
 elif source == "NORA3 point (metocean-api)":
     import folium
     from streamlit_folium import st_folium
@@ -170,8 +174,8 @@ elif source == "NORA3 point (metocean-api)":
 
     lat = st.sidebar.number_input("Latitude", 50.0, 80.0, step=0.1, key="lat")
     lon = st.sidebar.number_input("Longitude", -20.0, 40.0, step=0.1, key="lon")
-    start = st.sidebar.date_input("From", pd.Timestamp("2020-01-01"))
-    end = st.sidebar.date_input("To", pd.Timestamp("2020-12-31"))
+    start = st.sidebar.date_input("From", pd.Timestamp("2020-01-01"), format="YYYY-MM-DD")
+    end = st.sidebar.date_input("To", pd.Timestamp("2020-12-31"), format="YYYY-MM-DD")
     waves = st.sidebar.checkbox("Include waves", value=True)
     if end < start:
         st.sidebar.error("'To' must be after 'From'.")
@@ -211,6 +215,12 @@ st.sidebar.caption(
 missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
 if missing:
     st.error(f"The data is missing these columns: {', '.join(missing)}")
+    st.stop()
+# Wind at hub height and the shear come from the power law between two heights
+wind_heights = stats.measured_heights(df)
+if len(wind_heights) < 2:
+    st.error("Need wind speed at two heights or more (e.g. wind_speed_10m and wind_speed_100m) to find the wind "
+             f"at hub height and the wind shear. Found only: {', '.join(wind_heights.values())}")
     st.stop()
 has_waves = {"hs", "tp"} <= set(df.columns)
 
@@ -285,7 +295,7 @@ with wind_tab:
 
 with stability_tab:
     start = st.date_input("Stability time series from", df.index[0], min_value=df.index[0],
-                          max_value=df.index[-1], key="stability_start")
+                          max_value=df.index[-1], key="stability_start", format="YYYY-MM-DD")
     show(plots.plot_stability_timeseries(df, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=31),
                                          output_file=None))
     show(plots.plot_stability_by_month(df, output_file=None))
@@ -293,7 +303,7 @@ with stability_tab:
 
 with production_tab:
     start = st.date_input("Time series from", max(df.index[0], df.index[-1].replace(month=1, day=1)),
-                          min_value=df.index[0], max_value=df.index[-1])
+                          min_value=df.index[0], max_value=df.index[-1], format="YYYY-MM-DD")
     days = st.slider("Number of days", 1, 90, 31)
     show(plots.plot_power_output(df, turbine, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=days),
                                  output_file=None))
