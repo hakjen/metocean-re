@@ -50,5 +50,3 @@ is made from NORA3 (MET Norway) with `examples/download_nora3.py` and
 
 The sources for the formulas in `metocean_re/stats` and the references for the
 data are listed in [docs/references.md](docs/references.md).
-
-Developed with assistance from Claude (Anthropic).
