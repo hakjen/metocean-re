@@ -60,7 +60,8 @@ def fit_weibull(wind_speed):
     Fit a 2-parameter Weibull distribution to wind speeds, using the
     empirical moment approximation k = (std / mean)^-1.086.
 
-    Source: Justus et al. (1978), J. Applied Meteorology 17, 350-353.
+    Source: Justus et al. (1978), J. Applied Meteorology 17, 350-353,
+    method 3, eqs. (15)-(16), p. 351.
 
     Returns (shape k, scale c [m/s]).
     """

@@ -8,3 +8,6 @@ dist/
 .pytest_cache/
 outputs/
 data_raw/
+
+# macOS
+.DS_Store

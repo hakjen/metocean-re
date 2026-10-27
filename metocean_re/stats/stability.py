@@ -29,12 +29,15 @@ R_AIR = 287.05  # gas constant of dry air [J/(kg K)]
 VON_KARMAN = 0.4
 
 # Roughness length of the sea surface [m]. A typical open-sea value; in
-# reality it grows with the waves (Charnock 1955), which is ignored here.
+# reality it grows with the friction velocity, z0 = alpha u*^2 / g
+# (Charnock 1955, p. 639), which is ignored here. With alpha ~ 0.011 and
+# u* ~ 0.4 m/s (moderate wind) this gives about 2e-4 m.
 SEA_ROUGHNESS = 2e-4
 
 # Stability classes from the Obukhov length L [m], after Gryning et al.
-# (2007), Boundary-Layer Meteorology 124, 251-268 (Table 1). The outermost
-# classes are extended to L = 0.
+# (2007), Boundary-Layer Meteorology 124, 251-268 (Table 1, p. 260). The
+# outermost classes are extended to L = 0 (Gryning: -100 < L < -50 and
+# 10 < L < 50), so that every time step gets a class.
 #
 #   very unstable          -100 < L < 0
 #   unstable               -200 < L <= -100
@@ -60,14 +63,19 @@ def saturation_vapour_pressure(temperature):
     """
     Saturation vapour pressure [Pa] over water at temperature [K].
 
-    Source: Bolton (1980), Monthly Weather Review 108, 1046-1053, eq. (10).
+    Source: Bolton (1980), Monthly Weather Review 108, 1046-1053, eq. (10),
+    p. 1047. Accurate to 0.1 % for -30 C <= T <= 35 C.
     """
     t_celsius = temperature - 273.15
     return 611.2 * np.exp(17.67 * t_celsius / (t_celsius + 243.5))
 
 
 def specific_humidity(temperature, relative_humidity, pressure):
-    """Specific humidity [kg/kg] from temperature [K], relative humidity [0-1] and pressure [Pa]."""
+    """
+    Specific humidity [kg/kg] from temperature [K], relative humidity [0-1] and pressure [Pa].
+
+    0.622 = R_d / R_v (Bolton 1980, p. 1047) and 0.378 = 1 - 0.622.
+    """
     e = relative_humidity * saturation_vapour_pressure(temperature)
     return 0.622 * e / (pressure - 0.378 * e)
 
@@ -95,7 +103,11 @@ def virtual_potential_temperature(temperature, humidity, z):
 
     theta_v = T * (1 + 0.61 q) + g / cp * z
 
-    Source: Stull (1988), An Introduction to Boundary Layer Meteorology, ch. 1.
+    Source: Stull (1988), An Introduction to Boundary Layer Meteorology,
+    sec. 1.5.1, eq. (1.5.1b): theta_v = theta * (1 + 0.61 r). Approximations:
+    theta = T + g / cp * z (dry adiabatic), specific humidity q instead of
+    mixing ratio r, and the humidity term applied to T instead of theta
+    (less than 0.01 K at 50 m).
     """
     return temperature * (1 + 0.61 * humidity) + GRAVITY / CP_AIR * z
 
@@ -109,11 +121,14 @@ def bulk_richardson(data, z=50):
 
     Ri_b = g / theta_v * (theta_v(z) - theta_v(0)) * z / u(z)^2
 
-    The air at the sea surface is assumed saturated (98 % relative humidity
-    over salt water) at the sea surface temperature. The pressure is found
-    from the air density at height z.
+    The air at the sea surface is assumed saturated at the sea surface
+    temperature, with the vapour pressure of sea water taken as 0.98 times
+    that of pure water because of the salinity (Fairall et al. 2003, J.
+    Climate 16, 571-591, sec. 2b, p. 573). The pressure is found from the
+    air density at height z.
 
-    Source: Stull (1988), An Introduction to Boundary Layer Meteorology, sec. 5.6.
+    Source: Stull (1988), An Introduction to Boundary Layer Meteorology,
+    sec. 5.6.3, eq. (5.6.3), with the wind at the surface set to zero.
     """
     sst = data["sea_surface_temperature"]
     t_z = value_at_height(data, z, "air_temperature")
@@ -133,9 +148,11 @@ def psi_momentum(zeta):
     """
     Stability correction of the wind profile, psi_m(z/L).
 
-    Unstable: Paulson (1970), J. Applied Meteorology 9, 857-861, with the
-    Businger-Dyer form x = (1 - 16 z/L)^(1/4) (Dyer 1974, Boundary-Layer
-    Meteorology 7, 363-372). Stable: psi_m = -5 z/L (Dyer 1974).
+    Unstable: Paulson (1970), J. Applied Meteorology 9, 857-861, p. 858:
+    the integrated Businger-Dyer form with x = (1 - 16 z/L)^(1/4), where
+    16 gave the best fit (p. 859). Stable: psi_m = -5 z/L, integrated from
+    phi_m = 1 + 5 z/L. Both are the forms recommended by Dyer (1974),
+    Boundary-Layer Meteorology 7, 363-372 (p. 371), after Dyer and Hicks (1970).
     """
     zeta = np.asarray(zeta, dtype=float)
     x = np.power(1 - 16 * np.minimum(zeta, 0), 0.25)
@@ -156,8 +173,10 @@ def _richardson_from_zeta(zeta, z, z0=SEA_ROUGHNESS):
 
         Ri_b = z/L * (ln(z/z0) - psi_h) / (ln(z/z0) - psi_m)^2
 
-    Source: Launiainen (1995), Boundary-Layer Meteorology 76, 165-179.
-    The same roughness length is used for momentum and heat (simplification).
+    Source: Launiainen (1995), Boundary-Layer Meteorology 76, 165-179,
+    eq. (2), with alpha_HN = 1 as in the paper. The same roughness length is
+    used for momentum and heat, which Launiainen (sec. 2.2) notes is
+    generally true over water in light to moderate winds.
     """
     log_z = np.log(z / z0)
     return zeta * (log_z - psi_heat(zeta)) / (log_z - psi_momentum(zeta)) ** 2
@@ -168,8 +187,13 @@ def stability_parameter(data, z=50):
     Stability parameter z/L at height z [m], estimated from the bulk Richardson number.
 
     _richardson_from_zeta() increases steadily with z/L, so it is inverted
-    by interpolation in a table. In very stable conditions Ri_b approaches
-    0.2 and z/L is capped at 10.
+    by interpolation in a table (the "inverse mapping" in Launiainen 1995,
+    p. 167). In very stable conditions Ri_b approaches 0.2 and z/L is
+    capped at 10.
+
+    The stable correction psi = -5 z/L gives too strong stability effects
+    for z/L > 0.5 (Launiainen 1995, sec. 2.3), so L in the "very stable"
+    class is uncertain.
     """
     zeta_table = np.concatenate([-np.logspace(2, -4, 300), [0], np.logspace(-4, 1, 300)])
     ri_table = _richardson_from_zeta(zeta_table, z)
@@ -185,7 +209,11 @@ def obukhov_length(data, z=50):
 
 
 def stability_class(obukhov_length):
-    """Stability class for each value of the Obukhov length L [m] (Series of ordered categories)."""
+    """
+    Stability class for each value of the Obukhov length L [m] (Series of ordered categories).
+
+    The classes follow Gryning et al. (2007), with the outermost classes extended to L = 0.
+    """
     L = pd.Series(obukhov_length, dtype=float)
     with np.errstate(divide="ignore"):
         inverse_L = 1 / L

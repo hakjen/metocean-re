@@ -78,9 +78,12 @@ def turbulent_power(turbine, wind_speed, sigma_u, n_points=20):
     This lowers the power near rated speed (the curve bends down there) and
     raises it near cut-in (the curve bends up).
 
-    Source: IEC 61400-12-1:2017, Annex M (turbulence normalisation of power
-    curves); Albers (2010), "Turbulence and shear normalisation of wind
-    turbine power curve", Proc. EWEC 2010.
+    Source: Albers (2010), "Turbulence and shear normalisation of wind
+    turbine power curve", Proc. EWEC 2010, sec. 3.1, eq. (1) (the "Normal
+    Distribution Model"), applied to a theoretical power curve as in sec. 5.1.
+    The turbine's power curve is used as the zero-turbulence power curve,
+    without Albers' adjustment to measured data (sec. 3.2). The method is
+    included in IEC 61400-12-1:2017, Annex M.
 
     The integral is computed with Gauss-Hermite quadrature (n_points points).
     """

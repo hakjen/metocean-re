@@ -23,9 +23,10 @@ from . import turbines
 from .turbulence import hub_height_sigma_u
 from .profile import hub_height_wind_speed, rotor_wind_speeds, value_at_height
 
-# Wohler (S-N curve) exponents: typical values for welded steel (tower) and
-# glass-fibre composites (blades).
-WOHLER_STEEL = 4
+# Wohler (S-N curve) exponents for steel (tower) and glass-fibre composites
+# (blades), as in Bak et al. (2013), DTU Wind Energy Report-I-0092,
+# sec. 6.4.4, p. 74: m = 3 for steel and m = 10 for the blades.
+WOHLER_STEEL = 3
 WOHLER_COMPOSITE = 10
 
 
@@ -45,7 +46,9 @@ def thrust_coefficient(turbine, wind_speed, air_density=1.225):
     so a is found from C_P, and C_T from a. Outside cut-in - cut-out the
     rotor is idling and C_T = 0.
 
-    Source: Burton et al. (2011), Wind Energy Handbook, 2nd ed., Wiley, sec. 3.2.
+    Source: Burton et al. (2021), Wind Energy Handbook, 3rd ed., Wiley,
+    sec. 3.2, eqs. (3.12), (3.13) and (3.16). Momentum theory does not apply
+    for a >= 1/2 (p. 44); here a <= 1/3.
     Note: ideal theory gives a lower C_T below rated speed than real
     turbines (which lose some power to drag and the drivetrain).
     """
@@ -115,7 +118,9 @@ def relative_fatigue_damage(data, turbine=None, wohler_exponent=WOHLER_STEEL):
     step is proportional to E[S^m] (Palmgren-Miner rule).
 
     Source: Bendat (1964), Probability functions for random responses,
-    NASA CR-33 (narrow-band approximation).
+    NASA CR-33 (narrow-band approximation): Rayleigh peaks, eq. (28);
+    expected damage, eqs. (80)-(82). Bendat uses peak amplitudes instead of
+    ranges, which only changes the result by the constant 2^m.
     """
     sigma = thrust_std(data, turbine).fillna(0)
     m = wohler_exponent
