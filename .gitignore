@@ -11,3 +11,6 @@ data_raw/
 
 # macOS
 .DS_Store
+
+# metocean-api downloads (Streamlit app)
+cache/

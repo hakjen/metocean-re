@@ -24,6 +24,7 @@ dependencies = [
 [project.optional-dependencies]
 download = ["metocean-api"]
 test = ["pytest"]
+app = ["streamlit", "metocean-api"]
 
 [project.urls]
 Repository = "https://github.com/MET-OM/metocean-re"
