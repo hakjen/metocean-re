@@ -45,6 +45,20 @@ def test_monthly_energy_less_than_a_year(tmp_path):
     assert "Feb gives 1.0x the energy of Feb" in fig.texts[-1].get_text()
 
 
+@pytest.mark.parametrize("function", [plots.plot_stability_by_month, plots.plot_maintenance_downtime])
+def test_monthly_figures_with_missing_months(function, tmp_path):
+    # A few months only, and a month missing in the middle
+    data = ds.loc["2021-03":"2021-08"].drop(ds.loc["2021-05"].index)
+    function(data, output_file=str(tmp_path / "monthly.png"))
+
+
+def test_tilt_figure_with_low_waves(tmp_path):
+    # A sheltered site: Hs never above 8 m (Utsira Nord has up to 12 m)
+    data = ds.loc["2022-06":"2022-08"]
+    assert data["hs"].max() < 8
+    plots.plot_tilt_loss_comparison(data, 15, output_file=str(tmp_path / "tilt.png"))
+
+
 def test_obukhov_validation_figure(tmp_path):
     # The estimate compared with itself must give a perfect match
     reference = ds.iloc[:200].copy()
