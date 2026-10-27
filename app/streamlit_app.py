@@ -34,6 +34,9 @@ REQUIRED_COLUMNS = ["wind_speed_100m", "wind_direction_100m", "air_temperature_5
 WAVE_COLUMNS = ["hs", "tp", "hs_sea", "tp_sea", "hs_swell", "tp_swell"]
 ATM3HR_PREFIXES = ("air_temperature_", "relative_humidity_", "density_", "tke_")
 
+# All sources and assumptions behind the calculations
+REFERENCES_URL = "https://github.com/hakjen/metocean-re/blob/docs/docs/referanser.md"
+
 
 @st.cache_data
 def load_data(uploaded):
@@ -154,22 +157,33 @@ maintenance = st.sidebar.radio("Maintenance", ["weather", "fixed"], horizontal=T
                                index=0 if has_waves else 1, disabled=not has_waves)
 if maintenance == "weather":
     maintenance_options = dict(
-        hs_limit=st.sidebar.slider("Wave height limit for access, Hs [m]", 1.0, 4.0, 2.0, 0.25),
-        failures_per_year=st.sidebar.slider("Failures per year", 1.0, 15.0, 8.3, 0.1),
-        repair_hours=st.sidebar.slider("Repair time [hours]", 2, 48, 12),
+        hs_limit=st.sidebar.slider("Wave height limit for access, Hs [m]", 1.0, 4.0, 2.0, 0.25,
+                                   help="Own assumption (no source). The loss depends strongly on this limit."),
+        failures_per_year=st.sidebar.slider("Failures per year", 1.0, 15.0, 8.3, 0.1,
+                                            help="8.3 per turbine per year: Carroll et al. (2016), Wind Energy 19."),
+        repair_hours=st.sidebar.slider("Repair time [hours]", 2, 48, 12,
+                                       help="12 h: mean repair time weighted by failure rate, Carroll et al. (2016). "
+                                            "Excludes travel and waiting for access."),
     )
 else:
-    maintenance_options = dict(downtime_days=st.sidebar.slider("Maintenance [days/year]", 0, 60, 14))
+    maintenance_options = dict(downtime_days=st.sidebar.slider("Maintenance [days/year]", 0, 60, 14,
+                                                                 help="Own assumption, agreed with supervisor (MET)."))
 loss_options = dict(
     maintenance=maintenance,
     **maintenance_options,
-    electrical=st.sidebar.slider("Electrical loss [%]", 0.0, 10.0, 2.0, 0.5) / 100,
-    restart_speed=st.sidebar.slider("Restart after storm stop [m/s]", 15.0, 25.0, 20.0, 0.5),
-    tilt_angle=st.sidebar.slider("Constant tilt [deg]", 0.0, 15.0, 5.0, 0.5),
-    wave_response=st.sidebar.slider("Wave response (0 = off)", 0.0, 1.0, 1.0, 0.1) if has_waves else 0.0,
+    electrical=st.sidebar.slider("Electrical loss [%]", 0.0, 10.0, 2.0, 0.5,
+                                 help="Own assumption (no source). Typical values are 1-3 %.") / 100,
+    restart_speed=st.sidebar.slider("Restart after storm stop [m/s]", 15.0, 25.0, 20.0, 0.5,
+                                    help="Own assumption (no source). Typical value, not from a specific turbine."),
+    tilt_angle=st.sidebar.slider("Constant tilt [deg]", 0.0, 15.0, 5.0, 0.5,
+                                 help="Own assumption (no source). Scenario choice."),
+    wave_response=st.sidebar.slider("Wave response (0 = off)", 0.0, 1.0, 1.0, 0.1,
+                                    help="Own assumption (no source). 1.0 is a deliberate upper limit.") if has_waves else 0.0,
 )
 if not has_waves:
     st.sidebar.caption("No hs/tp columns in the data, so the wave-dependent losses are left out.")
+st.sidebar.caption("Hover over ? for where a default value comes from. "
+                   f"All sources and assumptions: [docs/referanser.md]({REFERENCES_URL})")
 
 # --- Figures ---------------------------------------------------------------------
 
