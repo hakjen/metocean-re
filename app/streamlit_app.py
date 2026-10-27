@@ -226,8 +226,8 @@ with loss_tab:
     if has_waves:
         if maintenance == "weather":
             show(plots.plot_maintenance_downtime(df, turbine, output_file=None, **maintenance_options))
-        show(plots.plot_tilt_loss_comparison(df, turbine, tilt_angle=loss_options["tilt_angle"] or 5.0,
-                                             wave_response=loss_options["wave_response"] or 1.0, output_file=None))
+        show(plots.plot_tilt_loss_comparison(df, turbine, tilt_angle=loss_options["tilt_angle"],
+                                             wave_response=loss_options["wave_response"], output_file=None))
 
 with load_tab:
     st.caption("Simple estimates for comparing conditions, not for design.")
