@@ -39,6 +39,12 @@ def test_figure_is_saved(function, args, tmp_path):
     assert fig.axes, "the figure has no axes"
 
 
+def test_monthly_energy_less_than_a_year(tmp_path):
+    # Data that do not cover every calendar month (e.g. a short NORA3 download in the app)
+    fig = plots.plot_monthly_energy(ds.loc["2021-02"], 15, output_file=str(tmp_path / "monthly.png"))
+    assert "Feb gives 1.0x the energy of Feb" in fig.texts[-1].get_text()
+
+
 def test_obukhov_validation_figure(tmp_path):
     # The estimate compared with itself must give a perfect match
     reference = ds.iloc[:200].copy()

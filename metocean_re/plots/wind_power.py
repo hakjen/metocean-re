@@ -141,7 +141,8 @@ def plot_monthly_energy(data, turbine=None, output_file="monthly_energy.png"):
     mean_power = power.resample("MS").mean()
     monthly = mean_power * mean_power.index.days_in_month * 24 / 1000
     by_month = monthly.groupby(monthly.index.month)
-    mean, low, high = by_month.mean(), by_month.min(), by_month.max()
+    # All 12 months on the axis, also for data shorter than a year (missing months are left empty)
+    mean, low, high = (s.reindex(range(1, 13)) for s in (by_month.mean(), by_month.min(), by_month.max()))
     x = np.arange(12)
 
     fig, ax = plt.subplots(figsize=(9, 5))
