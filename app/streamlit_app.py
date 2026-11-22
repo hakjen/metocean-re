@@ -37,7 +37,7 @@ WAVE_COLUMNS = ["hs", "tp", "hs_sea", "tp_sea", "hs_swell", "tp_swell"]
 ATM3HR_PREFIXES = ("air_temperature_", "relative_humidity_", "density_", "tke_")
 
 # All sources and assumptions behind the calculations
-REFERENCES_URL = "https://github.com/hakjen/metocean-re/blob/docs/docs/references.md"
+REFERENCES_URL = "https://github.com/hakjen/metocean-re/blob/add-wind-energy/docs/references.md"
 
 
 @st.cache_data
