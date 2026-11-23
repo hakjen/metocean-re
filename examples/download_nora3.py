@@ -11,6 +11,7 @@ Slow product (one file per hour, ~10 s each - only for short periods):
 
 Usage (from the project root, with metocean-api installed):
     python examples/download_nora3.py                      # fast products, Utsira Nord 2020-2022
+    python examples/download_nora3.py --lon 4.94 --lat 56.75   # another point (here Sorlige Nordsjo II)
     python examples/download_nora3.py --offshore-wind 2020-01-01 2020-01-10
 
 Afterwards, run examples/build_dataset.py to merge the files into one dataset.
@@ -44,12 +45,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", default="2020-01-01")
     parser.add_argument("--end", default="2022-12-31")
+    parser.add_argument("--lon", type=float, default=LON)
+    parser.add_argument("--lat", type=float, default=LAT)
     parser.add_argument("--offshore-wind", nargs=2, metavar=("START", "END"),
                         help="download NORA3_offshore_wind (slow) for this period instead")
     args = parser.parse_args()
 
     if args.offshore_wind:
-        print(download("NORA3_offshore_wind", *args.offshore_wind))
+        print(download("NORA3_offshore_wind", *args.offshore_wind, lon=args.lon, lat=args.lat))
     else:
         for product in FAST_PRODUCTS:
-            print(download(product, args.start, args.end))
+            print(download(product, args.start, args.end, lon=args.lon, lat=args.lat))
