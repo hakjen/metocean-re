@@ -11,6 +11,7 @@ data: the test dataset, an uploaded file or a NORA3 point from metocean-api.
 """
 
 import io
+import re
 import zipfile
 from contextlib import contextmanager
 from pathlib import Path
@@ -32,9 +33,9 @@ title_area = st.empty()  # filled in when the turbine is known, so the title sta
 EXAMPLE_FILE = Path(__file__).resolve().parent.parent / "tests" / "data" / "NORA3_utsira_nord_2020_2022.csv"
 SITE = {"name": "Utsira Nord", "lat": 59.27, "lon": 4.54}
 
-# Columns the calculations need (see metocean_re/stats/aux_funcs.py for all columns)
-REQUIRED_COLUMNS = ["wind_speed_100m", "wind_direction_100m", "air_temperature_50m", "relative_humidity_50m",
-                    "density_50m", "tke_50m", "sea_surface_temperature"]
+# Variables the calculations need at two heights or more, to find them at hub height and over the rotor
+# (see metocean_re/stats/aux_funcs.py for all columns)
+PROFILE_VARIABLES = ["wind_speed", "wind_direction", "air_temperature", "relative_humidity", "density", "tke"]
 WAVE_COLUMNS = ["hs", "tp", "hs_sea", "tp_sea", "hs_swell", "tp_swell"]
 ATM3HR_PREFIXES = ("air_temperature_", "relative_humidity_", "density_", "tke_")
 
@@ -140,20 +141,59 @@ def show(fig):
     plt.close(fig)
 
 
+# Columns of an uploaded file, with units (NORA3 names, as written by metocean-api)
+FILE_COLUMNS = pd.DataFrame(
+    [
+        ("time", "", "Required", "First column. ISO 8601 (2021-07-27 07:00) or dd.mm.yyyy hh:mm"),
+        ("wind_speed_{z}m", "m/s", "Required", "z is the height in m, e.g. wind_speed_100m"),
+        ("wind_direction_{z}m", "deg", "Required", "Direction the wind comes from"),
+        ("air_temperature_{z}m", "K", "Required", ""),
+        ("relative_humidity_{z}m", "0-1", "Required", "As a fraction, not in percent"),
+        ("density_{z}m", "kg/m3", "Required", ""),
+        ("tke_{z}m", "m2/s2", "Required", "Turbulent kinetic energy"),
+        ("sea_surface_temperature", "K", "Required", ""),
+        ("hs, tp", "m, s", "Optional", "Significant wave height and peak period. Without them the wave-dependent "
+                                       "losses are left out"),
+    ],
+    columns=["Column", "Unit", "", "Note"],
+)
+EXAMPLE_COLUMNS = [f"{var}_{z}m" for var in ["wind_speed", "wind_direction"] for z in (10, 100, 250)] + [
+    f"{var}_{z}m" for var in ["air_temperature", "relative_humidity", "density", "tke"] for z in (50, 100)] + [
+    "sea_surface_temperature", "hs", "tp"]
+
+
+def show_file_format():
+    """What an uploaded file must look like, with a small example file to start from."""
+    st.subheader("Upload your own data")
+    st.markdown("A CSV file with one row per time step (e.g. hourly) and the columns below. "
+                "The columns with a height `{z}` are needed at **two heights or more**, so they can be "
+                "found at hub height and over the rotor; heights around the rotor give the best results. "
+                "Lines starting with `#` are skipped, so a description can be put at the top.")
+    st.dataframe(FILE_COLUMNS, hide_index=True, width="stretch")
+    example = load_data(None).loc["2020-01", EXAMPLE_COLUMNS]
+    st.download_button(
+        "Example file (CSV)",
+        f"# NORA3 hindcast (MET Norway), {SITE['name']}, January 2020, only the columns the app needs\n"
+        + example.to_csv(),
+        file_name="example_upload.csv", mime="text/csv", icon=":material/download:", on_click="ignore",
+        help=f"One month from {SITE['name']}, to see the format or to fill in your own data.")
+
+
 # --- Sidebar: data, turbine and loss settings ------------------------------------
 
 st.sidebar.header("Data")
 source = st.sidebar.radio("Source", [f"NORA3, {SITE['name']}", "Upload file", "NORA3 point (metocean-api)"])
 
 if source == "Upload file":
-    uploaded = st.sidebar.file_uploader("Time series (NORA3 CSV, as made by examples/build_dataset.py)", type=["csv"])
+    uploaded = st.sidebar.file_uploader("Time series (CSV)", type=["csv"])
     if not uploaded:
-        st.info("Upload a file in the sidebar.")
+        show_file_format()
         st.stop()
     try:
         df = load_data(uploaded)
     except ValueError as error:
         st.error(f"Could not read the file: {error}")
+        show_file_format()
         st.stop()
 elif source == "NORA3 point (metocean-api)":
     import folium
@@ -214,15 +254,14 @@ else:
 st.sidebar.caption(
     f"{source}: {df.index[0]:%Y-%m-%d} to {df.index[-1]:%Y-%m-%d}, {len(df)} time steps"
 )
-missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+heights = {var: [c for c in df.columns if re.fullmatch(rf"{var}_\d+m", c)] for var in PROFILE_VARIABLES}
+missing = [f"{var}_{{z}}m (found {', '.join(found) or 'none'})" for var, found in heights.items() if len(found) < 2]
+missing += [] if "sea_surface_temperature" in df.columns else ["sea_surface_temperature"]
 if missing:
-    st.error(f"The data is missing these columns: {', '.join(missing)}")
-    st.stop()
-# Wind at hub height and the shear come from the power law between two heights
-wind_heights = stats.measured_heights(df)
-if len(wind_heights) < 2:
-    st.error("Need wind speed at two heights or more (e.g. wind_speed_10m and wind_speed_100m) to find the wind "
-             f"at hub height and the wind shear. Found only: {', '.join(wind_heights.values())}")
+    st.error("The data is missing columns. Need these at two heights or more, e.g. density_50m and "
+             f"density_100m: {', '.join(missing)}")
+    if source == "Upload file":
+        show_file_format()
     st.stop()
 has_waves = {"hs", "tp"} <= set(df.columns)
 
