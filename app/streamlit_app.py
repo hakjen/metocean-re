@@ -10,6 +10,8 @@ calculations and figures live there. The only code here is reading the
 data: the test dataset, an uploaded file or a NORA3 point from metocean-api.
 """
 
+import io
+import zipfile
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -20,7 +22,7 @@ import streamlit as st
 
 matplotlib.use("Agg")  # draw to images only; a server has no screen
 
-from metocean_re import plots, stats
+from metocean_re import plots, stats, tables
 from metocean_re.stats import turbines
 
 st.set_page_config(page_title="Wind energy", layout="wide")
@@ -274,6 +276,44 @@ if not has_waves:
     st.sidebar.caption("No hs/tp columns in the data, so the wave-dependent losses are left out.")
 st.sidebar.caption("Hover over ? for where a default value comes from. "
                    f"All sources and assumptions: [docs/references.md]({REFERENCES_URL})")
+
+st.sidebar.header("Download")
+if source == "NORA3 point (metocean-api)":
+    lon, lat, start, end, _ = request
+    data_name, data_note = f"NORA3_{lat:.2f}N_{lon:.2f}E_{start:%Y%m%d}_{end:%Y%m%d}", (
+        f"NORA3 hindcast (MET Norway), nearest grid point to {lat:.2f} N {lon:.2f} E, downloaded with metocean-api")
+elif source == "Upload file":
+    data_name, data_note = Path(uploaded.name).stem, f"Uploaded file {uploaded.name}"
+else:
+    data_name, data_note = EXAMPLE_FILE.stem, f"NORA3 hindcast (MET Norway), {SITE['name']}"
+st.sidebar.download_button(
+    "Data (CSV)", f"# {data_note}\n" + df.to_csv(), file_name=f"{data_name}.csv", mime="text/csv",
+    icon=":material/download:", on_click="ignore", width="stretch",
+    help="The time series used in the figures. Can be uploaded again with 'Upload file'.")
+
+
+def tables_zip():
+    """All tables for the chosen turbine and losses as CSV files in one ZIP file (made on click)."""
+    all_turbines = turbines.names() + ([turbine] if choice == "Custom" else [])
+    files = {
+        "energy_production.csv": tables.table_energy_production(df, all_turbines, output_file=None, **loss_options),
+        "annual_energy_losses.csv": tables.table_annual_energy_losses(df, turbine, output_file=None, **loss_options),
+        "losses_by_stability.csv": tables.table_losses_by_stability(df, turbine, output_file=None),
+        "stability_by_month.csv": tables.table_stability_by_month(df, output_file=None),
+        "turbines.csv": tables.table_turbines(output_file=None),
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, table in files.items():
+            archive.writestr(name, table.to_csv())
+    return buffer.getvalue()
+
+
+st.sidebar.download_button(
+    "Tables (ZIP)", tables_zip, file_name=f"wind_energy_tables_{data_name}.zip", mime="application/zip",
+    icon=":material/download:", on_click="ignore", width="stretch",
+    help="Energy production for all turbines, the losses and the stability classes as CSV files, "
+         "with the turbine and losses chosen above.")
 
 # --- Figures ---------------------------------------------------------------------
 
