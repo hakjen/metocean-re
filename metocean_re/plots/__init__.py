@@ -7,6 +7,7 @@ what is shown and a grey subtitle stating the main result.
 """
 
 from .profile import *
+from .sites import *
 from .stability import *
 from .wind_loads import *
 from .wind_losses import *

@@ -6,6 +6,7 @@ from metocean_re import plots, stats
 
 dirname = os.path.dirname(__file__)
 ds = stats.read_metocean_csv(os.path.join(dirname, "data", "NORA3_utsira_nord_2020_2022.csv"))
+sites = {"2020": ds.loc["2020"], "2021": ds.loc["2021"]}  # two "sites" for the comparison figures
 
 # Every figure function with its arguments (besides output_file)
 FIGURES = [
@@ -28,6 +29,10 @@ FIGURES = [
     (plots.plot_tilt_loss_comparison, (ds, 15)),
     (plots.plot_thrust, (ds, 15)),
     (plots.plot_loads_by_stability, (ds, 15)),
+    (plots.plot_monthly_energy_sites, (sites, 15)),
+    (plots.plot_wind_distribution_sites, (sites, 15)),
+    (plots.plot_losses_sites, (sites, 15)),
+    (plots.plot_stability_sites, (sites,)),
 ]
 
 

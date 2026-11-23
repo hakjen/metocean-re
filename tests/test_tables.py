@@ -37,3 +37,12 @@ def test_table_stability_by_month_rows_sum_to_100():
 def test_table_losses_by_stability():
     table = tables.table_losses_by_stability(ds, 15, output_file=None)
     assert table["share_of_time"].sum() == pytest.approx(100, abs=0.01)  # values are rounded
+
+
+def test_table_site_comparison_matches_energy_production():
+    sites = {"2020": ds.loc["2020"], "2021": ds.loc["2021"]}
+    table = tables.table_site_comparison(sites, 15, output_file=None)
+    assert list(table.columns) == ["2020", "2021"]
+    for name, data in sites.items():
+        production = tables.table_energy_production(data, [15], output_file=None)
+        assert float(table.loc["net_GWh_per_year", name]) == pytest.approx(production["net_GWh_per_year"].iloc[0], abs=1e-3)

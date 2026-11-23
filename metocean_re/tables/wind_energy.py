@@ -9,7 +9,8 @@ import pandas as pd
 from ..stats import turbines
 from ..stats.stability import CLASS_NAMES, obukhov_length, stability_class
 from ..stats.wind_losses import annual_energy_losses, losses_by_stability
-from ..stats.wind_power import HOURS_PER_YEAR
+from ..stats.profile import hub_height_wind_speed
+from ..stats.wind_power import HOURS_PER_YEAR, fit_weibull
 
 
 def _save(table, output_file):
@@ -65,3 +66,35 @@ def table_stability_by_month(data, output_file="table_stability_by_month.csv"):
     table = pd.crosstab(classes.index.month, classes, normalize="index").reindex(columns=CLASS_NAMES, fill_value=0)
     table.index.name = "month"
     return _save((table * 100).round(1), output_file)
+
+
+def table_site_comparison(datasets, turbine=None, output_file="table_site_comparison.csv", **loss_options):
+    """
+    Key numbers for the same turbine at several sites, one column per site.
+
+    datasets is a dict {site name: data}; loss_options are passed on to
+    stats.annual_energy_losses().
+    """
+    t = turbines.get(turbine)
+    columns = {}
+    for name, data in datasets.items():
+        u = hub_height_wind_speed(data, t).dropna()
+        losses = annual_energy_losses(data, t, **loss_options)
+        gross, net = losses.attrs["gross_MWh"], losses.attrs["net_MWh"]
+        classes = stability_class(obukhov_length(data))
+        columns[name] = {
+            "period": f"{data.index[0]:%Y-%m-%d} to {data.index[-1]:%Y-%m-%d}",
+            "mean_wind_speed_hub_m_s": u.mean(),
+            "weibull_shape_k": fit_weibull(u)[0],
+            "time_at_rated_or_above_percent": (u >= t.rated_speed).mean() * 100,
+            "gross_GWh_per_year": gross / 1000,
+            "net_GWh_per_year": net / 1000,
+            "net_capacity_factor_percent": net / (t.rated_power * HOURS_PER_YEAR) * 100,
+            "total_loss_percent": (1 - net / gross) * 100,
+            "maintenance_loss_percent": losses.loc["Maintenance", "loss_fraction"] * 100,
+            "time_stable_percent": classes.isin(["near-neutral stable", "stable", "very stable"]).mean() * 100,
+            "mean_hs_m": data["hs"].mean() if "hs" in data else np.nan,
+        }
+    table = pd.DataFrame(columns)
+    numbers = table.drop(index="period").astype(float).round(3)
+    return _save(pd.concat([table.loc[["period"]], numbers]), output_file)
