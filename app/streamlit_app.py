@@ -184,6 +184,27 @@ def mean_hub_height_wind(data, turbine):
     return stats.hub_height_wind_speed(data, turbine).mean()
 
 
+@st.cache_data(show_spinner=False, max_entries=50, hash_funcs=CACHE_HASHES)
+def site_comparison(datasets, turbine, **loss_options):
+    return tables.table_site_comparison(datasets, turbine, output_file=None, **loss_options)
+
+
+# Row names of tables.table_site_comparison() as shown in the app
+COMPARISON_ROWS = {
+    "period": "Period",
+    "net_GWh_per_year": "Net production [GWh/year]",
+    "gross_GWh_per_year": "Gross production [GWh/year]",
+    "net_capacity_factor_percent": "Net capacity factor [%]",
+    "total_loss_percent": "Total losses [%]",
+    "maintenance_loss_percent": "Maintenance loss [%]",
+    "mean_wind_speed_hub_m_s": "Mean wind at hub height [m/s]",
+    "weibull_shape_k": "Weibull shape k (higher = steadier wind)",
+    "time_at_rated_or_above_percent": "Time at rated wind speed or above [%]",
+    "time_stable_percent": "Time with stable conditions [%]",
+    "mean_hs_m": "Mean wave height Hs [m]",
+}
+
+
 # Columns of an uploaded file, with units (NORA3 names, as written by metocean-api)
 FILE_COLUMNS = pd.DataFrame(
     [
@@ -441,8 +462,8 @@ loss_column.metric("Total losses", f"{1 - net_MWh / gross_MWh:.1%}", border=True
 wind_column.metric("Mean wind at hub height", f"{mean_hub_height_wind(df, turbine):.1f} m/s",
                    border=True, help=f"At {turbine.hub_height:.0f} m, from the power law between the two "
                                      "nearest heights in the data.")
-turbine_tab, wind_tab, stability_tab, production_tab, loss_tab, load_tab = st.tabs(
-    ["Turbines", "Wind", "Stability", "Production", "Losses", "Loads"])
+turbine_tab, wind_tab, stability_tab, production_tab, loss_tab, load_tab, compare_tab = st.tabs(
+    ["Turbines", "Wind", "Stability", "Production", "Losses", "Loads", "Compare sites"])
 
 with turbine_tab:
     all_turbines = turbines.names() + ([turbine] if choice == "Custom" else [])
@@ -484,3 +505,58 @@ with load_tab:
     st.caption("Simple estimates for comparing conditions, not for design.")
     show("plot_thrust", df, turbine)
     show("plot_loads_by_stability", df, turbine)
+
+# Last tab: it may stop the script while site B is not chosen yet, so nothing may come after it
+with compare_tab:
+    st.caption(f"The same turbine and losses at a second site. Site A ({site_a['name']}) is chosen in the sidebar.")
+    b_panel, b_main = st.columns([1, 2])
+    b_panel.subheader("Site B")
+    default_b = next((name for name in PRESET_SITES if name != site_a["name"]), NORA3_POINT)
+    site_b = choose_data("b", b_panel, b_main, default_b)
+    if site_b is None:
+        st.stop()
+    df_b = site_b["data"]
+    b_panel.caption(f"{df_b.index[0]:%Y-%m-%d} to {df_b.index[-1]:%Y-%m-%d}, {len(df_b)} time steps")
+    missing_b = missing_columns(df_b)
+    if missing_b:
+        b_main.error(f"Site B is missing columns. Need these at two heights or more: {', '.join(missing_b)}")
+        st.stop()
+
+    name_a, name_b = site_a["name"], site_b["name"]
+    if name_a == name_b:
+        name_a, name_b = f"{name_a} (A)", f"{name_b} (B)"
+    datasets = {name_a: df, name_b: df_b}
+
+    # Both sites need waves for the weather-dependent maintenance and the wave loss
+    compare_options = loss_options
+    if not (has_waves and {"hs", "tp"} <= set(df_b.columns)):
+        compare_options = {k: v for k, v in loss_options.items() if k not in ("hs_limit", "failures_per_year",
+                                                                              "repair_hours", "downtime_days")}
+        compare_options.update(maintenance="fixed", downtime_days=maintenance_options.get("downtime_days", 14),
+                               wave_response=0.0)
+        st.info("One of the sites has no wave data, so both are compared with fixed maintenance "
+                f"({compare_options['downtime_days']} days/year) and without the wave loss.")
+    periods = {name: (data.index[0].date(), data.index[-1].date()) for name, data in datasets.items()}
+    if periods[name_a] != periods[name_b]:
+        st.warning("The two sites cover different periods. The wind varies from year to year (at Utsira Nord the "
+                   "net production was about 7 % lower in 2021 than in 2020), so part of the difference can come "
+                   "from the period and not the site.")
+
+    comparison = site_comparison(datasets, turbine, **compare_options)
+    shown = comparison.reindex(COMPARISON_ROWS)
+    numbers = shown.drop(index="period").astype(float)
+    difference = (numbers[name_b] - numbers[name_a]).map(lambda x: f"{x:+.2f}")
+    shown = shown.astype(object)
+    for name in datasets:
+        shown.loc[numbers.index, name] = numbers[name].map(lambda x: f"{x:.2f}")
+    shown["B - A"] = pd.concat([pd.Series({"period": ""}), difference])
+    shown.index = shown.index.map(COMPARISON_ROWS)
+    st.dataframe(shown, width="stretch")
+    st.download_button(
+        "Comparison (CSV)", lambda: comparison.to_csv(), mime="text/csv", icon=":material/download:",
+        file_name=f"site_comparison_{site_a['file_name']}_{site_b['file_name']}.csv", on_click="ignore")
+
+    show("plot_monthly_energy_sites", datasets, turbine)
+    show("plot_wind_distribution_sites", datasets, turbine)
+    show("plot_losses_sites", datasets, turbine, **compare_options)
+    show("plot_stability_sites", datasets)
