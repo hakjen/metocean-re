@@ -278,6 +278,21 @@ st.sidebar.caption("Hover over ? for where a default value comes from. "
 # --- Figures ---------------------------------------------------------------------
 
 title_area.title(f"Wind energy: {turbine.name}")
+
+# Key numbers for the chosen turbine, data and losses, above the tabs
+losses = stats.annual_energy_losses(df, turbine, **loss_options)
+gross_MWh, net_MWh = losses.attrs["gross_MWh"], losses.attrs["net_MWh"]
+net_column, cf_column, loss_column, wind_column = st.columns(4)
+net_column.metric("Net energy production", f"{net_MWh / 1000:.1f} GWh/year", border=True,
+                  help="Mean over the whole period, after all the losses in the Losses tab.")
+cf_column.metric("Net capacity factor", f"{net_MWh / (turbine.rated_power * stats.HOURS_PER_YEAR):.0%}",
+                 border=True, help="Net production divided by what the turbine would make at rated power all the time.")
+loss_column.metric("Total losses", f"{1 - net_MWh / gross_MWh:.1%}", border=True,
+                   help=f"Of the gross production of {gross_MWh / 1000:.1f} GWh/year. "
+                        "The single losses are in the Losses tab.")
+wind_column.metric("Mean wind at hub height", f"{stats.hub_height_wind_speed(df, turbine).mean():.1f} m/s",
+                   border=True, help=f"At {turbine.hub_height:.0f} m, from the power law between the two "
+                                     "nearest heights in the data.")
 turbine_tab, wind_tab, stability_tab, production_tab, loss_tab, load_tab = st.tabs(
     ["Turbines", "Wind", "Stability", "Production", "Losses", "Loads"])
 
