@@ -97,6 +97,14 @@ def test_measured_height_is_used_directly():
     assert (stats.wind_speed_at_height(ds, 100) == ds["wind_speed_100m"]).all()
 
 
+def test_one_height_gives_clear_error():
+    # Only density_50m: the density at hub height cannot be found (was NaN before)
+    one_height = ds[["density_50m"]]
+    assert stats.value_at_height(one_height, 50, "density").equals(ds["density_50m"].rename("density"))
+    with pytest.raises(ValueError, match="two heights"):
+        stats.value_at_height(one_height, 150, "density")
+
+
 def test_rews_equals_hub_speed_without_shear():
     assert stats.rotor_equivalent_wind_speed(profile_frame(alpha=0.0), 15).iloc[0] == pytest.approx(8.0)
 

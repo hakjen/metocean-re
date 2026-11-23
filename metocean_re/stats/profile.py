@@ -72,6 +72,9 @@ def value_at_height(data, z, var="wind_speed"):
     heights = measured_heights(data, var)
     if z in heights:
         return data[heights[z]].rename(var)
+    if len(heights) < 2:
+        raise ValueError(f"Need '{var}' at two heights or more to find it at {z} m, "
+                         f"found only {', '.join(heights.values())}.")
 
     values = data[list(heights.values())].to_numpy(dtype=float)
     if var == "wind_direction":
