@@ -40,6 +40,17 @@ plots.plot_losses_by_stability(df, t)
 
 See `examples/example_wind_energy.py` for the full workflow.
 
+## Web app
+
+The figures are also available in a small Streamlit app, where you can
+upload your own data or download a NORA3 point, choose or define a turbine
+and change the losses:
+
+```shell
+pip install -e .[app]
+streamlit run app/streamlit_app.py
+```
+
 ## Data
 
 The functions use NORA3 column names as written by

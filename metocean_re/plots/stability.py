@@ -69,7 +69,9 @@ def plot_stability_timeseries(data, start_time=None, end_time=None, z=50, output
 def plot_stability_by_month(data, z=50, output_file="stability_by_month.png"):
     """Share of time in each stability class, for each calendar month."""
     classes = stability_class(obukhov_length(data, z))
-    shares = pd.crosstab(classes.index.month, classes, normalize="index").reindex(columns=CLASS_NAMES, fill_value=0)
+    # Months without data are left empty
+    shares = pd.crosstab(classes.index.month, classes, normalize="index").reindex(
+        index=range(1, 13), columns=CLASS_NAMES, fill_value=0)
 
     fig, ax = plt.subplots(figsize=(10, 5.4))
     bottom = np.zeros(12)

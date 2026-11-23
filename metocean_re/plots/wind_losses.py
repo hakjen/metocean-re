@@ -89,9 +89,10 @@ def plot_maintenance_downtime(data, turbine=None, repair_hours=12, hs_limit=2.0,
     """
     t = turbines.get(turbine)
     downtime, _ = repair_downtime(data, repair_hours, hs_limit)
+    # Months without data are NaN, so no bar is drawn for them
     month = data.index.month
-    access = (data["hs"] < hs_limit).groupby(month).mean() * 100
-    mean_downtime = downtime.groupby(month).mean()
+    access = (data["hs"] < hs_limit).groupby(month).mean().reindex(range(1, 13)) * 100
+    mean_downtime = downtime.groupby(month).mean().reindex(range(1, 13))
     limits = np.arange(1.0, 3.75, 0.25)
     loss = [weather_maintenance_loss(data, t, failures_per_year, repair_hours, limit) * 100 for limit in limits]
     x = np.arange(12)
@@ -162,7 +163,8 @@ def plot_tilt_loss_comparison(data, turbine=None, tilt_angle=5.0, wave_response=
     style_axes(ax1)
 
     # Right: loss per wave height class
-    hs_bins = [0, 1, 2, 3, 4, 5, 6, 8, np.ceil(data["hs"].max())]
+    hs_top = np.ceil(data["hs"].max())  # the fixed edges above the largest Hs are left out
+    hs_bins = [b for b in [0, 1, 2, 3, 4, 5, 6, 8] if b < hs_top] + [hs_top]
     hs_class = pd.cut(data["hs"], hs_bins)
     grouped = pd.DataFrame({"gross": gross, "constant": constant, "waves": waves}).groupby(
         hs_class, observed=True).sum()

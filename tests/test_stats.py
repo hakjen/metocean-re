@@ -62,6 +62,30 @@ def test_read_nora3():
     assert ds["relative_humidity_50m"].max() <= 1.0
 
 
+@pytest.mark.parametrize("times", [
+    ["2021-07-27 07:00:00", "2021-07-27 08:00:00"],
+    ["27.07.2021 07:00", "27.07.2021 08:00"],
+    ["27/07/2021 07:00", "27/07/2021 08:00"],
+    ["07/27/2021 07:00", "07/27/2021 08:00"],
+])
+def test_time_formats(times):
+    expected = pd.DatetimeIndex(["2021-07-27 07:00", "2021-07-27 08:00"])
+    assert stats.parse_time(times).equals(expected)
+
+
+def test_ambiguous_slash_dates_give_clear_error():
+    with pytest.raises(ValueError, match="dd/mm/yyyy or mm/dd/yyyy"):
+        stats.parse_time(["03/04/2021 07:00", "03/04/2021 08:00"])
+
+
+def test_read_sorts_rows_by_time(tmp_path):
+    path = tmp_path / "unsorted.csv"
+    path.write_text("# comment\ntime,wind_speed_100m\n02.01.2021 00:00,5\n01.01.2021 00:00,4\n")
+    df = stats.read_metocean_csv(path)
+    assert list(df.index) == [pd.Timestamp("2021-01-01"), pd.Timestamp("2021-01-02")]
+    assert list(df["wind_speed_100m"]) == [4, 5]
+
+
 def test_power_law_interpolation_is_exact_for_power_law_profile():
     frame = profile_frame(alpha=0.12)
     assert stats.wind_speed_at_height(frame, 150).iloc[0] == pytest.approx(stats.power_law(8.0, 10, 150, 0.12))
