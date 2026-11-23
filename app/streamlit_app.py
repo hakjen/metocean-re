@@ -10,6 +10,7 @@ calculations and figures live there. The only code here is reading the
 data: the test dataset, an uploaded file or a NORA3 point from metocean-api.
 """
 
+import dataclasses
 import io
 import re
 import zipfile
@@ -20,6 +21,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 matplotlib.use("Agg")  # draw to images only; a server has no screen
 
@@ -136,9 +138,42 @@ def load_nora3(lon, lat, start_time, end_time, waves=True, progress=None):
     return df
 
 
-def show(fig):
-    st.pyplot(fig)
+# Cached figures and results: moving one slider only redraws the figures that depend on it. The data
+# are hashed by content (a few ms) and the turbine by its parameters, so a changed input gives a new figure.
+MAX_IMAGE_WIDTH = 1460  # px, the widest image Streamlit shows without resizing
+CACHE_HASHES = {pd.DataFrame: lambda data: int(pd.util.hash_pandas_object(data).sum()),
+                turbines.Turbine: dataclasses.astuple}
+
+
+@st.cache_data(show_spinner=False, max_entries=500, hash_funcs=CACHE_HASHES)
+def figure_png(name, *args, **kwargs):
+    """The figure plots.<name>(*args, **kwargs) as PNG bytes."""
+    fig = getattr(plots, name)(*args, output_file=None, **kwargs)
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format="png", dpi=200, bbox_inches="tight", facecolor=fig.get_facecolor())
     plt.close(fig)
+    # Streamlit shrinks images wider than this on every rerun; do it once here instead
+    image = Image.open(buffer)
+    if image.width > MAX_IMAGE_WIDTH:
+        image = image.resize((MAX_IMAGE_WIDTH, round(image.height * MAX_IMAGE_WIDTH / image.width)), Image.LANCZOS)
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def show(name, *args, **kwargs):
+    """Show a figure from metocean_re.plots, e.g. show("plot_thrust", df, turbine)."""
+    st.image(figure_png(name, *args, **kwargs), width="stretch")
+
+
+@st.cache_data(show_spinner=False, max_entries=100, hash_funcs=CACHE_HASHES)
+def energy_losses(data, turbine, **loss_options):
+    return stats.annual_energy_losses(data, turbine, **loss_options)
+
+
+@st.cache_data(show_spinner=False, max_entries=100, hash_funcs=CACHE_HASHES)
+def mean_hub_height_wind(data, turbine):
+    return stats.hub_height_wind_speed(data, turbine).mean()
 
 
 # Columns of an uploaded file, with units (NORA3 names, as written by metocean-api)
@@ -326,7 +361,7 @@ elif source == "Upload file":
 else:
     data_name, data_note = EXAMPLE_FILE.stem, f"NORA3 hindcast (MET Norway), {SITE['name']}"
 st.sidebar.download_button(
-    "Data (CSV)", f"# {data_note}\n" + df.to_csv(), file_name=f"{data_name}.csv", mime="text/csv",
+    "Data (CSV)", lambda: f"# {data_note}\n" + df.to_csv(), file_name=f"{data_name}.csv", mime="text/csv",
     icon=":material/download:", on_click="ignore", width="stretch",
     help="The time series used in the figures. Can be uploaded again with 'Upload file'.")
 
@@ -359,7 +394,7 @@ st.sidebar.download_button(
 title_area.title(f"Wind energy: {turbine.name}")
 
 # Key numbers for the chosen turbine, data and losses, above the tabs
-losses = stats.annual_energy_losses(df, turbine, **loss_options)
+losses = energy_losses(df, turbine, **loss_options)
 gross_MWh, net_MWh = losses.attrs["gross_MWh"], losses.attrs["net_MWh"]
 net_column, cf_column, loss_column, wind_column = st.columns(4)
 net_column.metric("Net energy production", f"{net_MWh / 1000:.1f} GWh/year", border=True,
@@ -369,7 +404,7 @@ cf_column.metric("Net capacity factor", f"{net_MWh / (turbine.rated_power * stat
 loss_column.metric("Total losses", f"{1 - net_MWh / gross_MWh:.1%}", border=True,
                    help=f"Of the gross production of {gross_MWh / 1000:.1f} GWh/year. "
                         "The single losses are in the Losses tab.")
-wind_column.metric("Mean wind at hub height", f"{stats.hub_height_wind_speed(df, turbine).mean():.1f} m/s",
+wind_column.metric("Mean wind at hub height", f"{mean_hub_height_wind(df, turbine):.1f} m/s",
                    border=True, help=f"At {turbine.hub_height:.0f} m, from the power law between the two "
                                      "nearest heights in the data.")
 turbine_tab, wind_tab, stability_tab, production_tab, loss_tab, load_tab = st.tabs(
@@ -377,43 +412,41 @@ turbine_tab, wind_tab, stability_tab, production_tab, loss_tab, load_tab = st.ta
 
 with turbine_tab:
     all_turbines = turbines.names() + ([turbine] if choice == "Custom" else [])
-    show(plots.plot_power_curves(all_turbines, output_file=None))
-    show(plots.plot_turbine_comparison(df, all_turbines, output_file=None, **loss_options))
+    show("plot_power_curves", all_turbines)
+    show("plot_turbine_comparison", df, all_turbines, **loss_options)
 
 with wind_tab:
-    show(plots.plot_wind_profile(df, turbine, output_file=None))
-    show(plots.plot_wind_shear_explained(df, turbine, output_file=None))
-    show(plots.plot_wind_and_energy_distribution(df, turbine, output_file=None))
-    show(plots.plot_turbulence_intensity(df, turbine, output_file=None))
-    show(plots.plot_turbulence_power_curve(turbine, output_file=None))
+    show("plot_wind_profile", df, turbine)
+    show("plot_wind_shear_explained", df, turbine)
+    show("plot_wind_and_energy_distribution", df, turbine)
+    show("plot_turbulence_intensity", df, turbine)
+    show("plot_turbulence_power_curve", turbine)
 
 with stability_tab:
     start = st.date_input("Stability time series from", df.index[0], min_value=df.index[0],
                           max_value=df.index[-1], key="stability_start", format="YYYY-MM-DD")
-    show(plots.plot_stability_timeseries(df, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=31),
-                                         output_file=None))
-    show(plots.plot_stability_by_month(df, output_file=None))
-    show(plots.plot_stability_effects(df, turbine, output_file=None))
+    show("plot_stability_timeseries", df, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=31))
+    show("plot_stability_by_month", df)
+    show("plot_stability_effects", df, turbine)
 
 with production_tab:
     start = st.date_input("Time series from", max(df.index[0], df.index[-1].replace(month=1, day=1)),
                           min_value=df.index[0], max_value=df.index[-1], format="YYYY-MM-DD")
     days = st.slider("Number of days", 1, 90, 31)
-    show(plots.plot_power_output(df, turbine, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=days),
-                                 output_file=None))
-    show(plots.plot_monthly_energy(df, turbine, output_file=None))
-    show(plots.plot_energy_per_year(df, turbine, output_file=None))
+    show("plot_power_output", df, turbine, pd.Timestamp(start), pd.Timestamp(start) + pd.Timedelta(days=days))
+    show("plot_monthly_energy", df, turbine)
+    show("plot_energy_per_year", df, turbine)
 
 with loss_tab:
-    show(plots.plot_energy_losses(df, turbine, output_file=None, **loss_options))
-    show(plots.plot_losses_by_stability(df, turbine, output_file=None))
+    show("plot_energy_losses", df, turbine, **loss_options)
+    show("plot_losses_by_stability", df, turbine)
     if has_waves:
         if maintenance == "weather":
-            show(plots.plot_maintenance_downtime(df, turbine, output_file=None, **maintenance_options))
-        show(plots.plot_tilt_loss_comparison(df, turbine, tilt_angle=loss_options["tilt_angle"],
-                                             wave_response=loss_options["wave_response"], output_file=None))
+            show("plot_maintenance_downtime", df, turbine, **maintenance_options)
+        show("plot_tilt_loss_comparison", df, turbine, tilt_angle=loss_options["tilt_angle"],
+             wave_response=loss_options["wave_response"])
 
 with load_tab:
     st.caption("Simple estimates for comparing conditions, not for design.")
-    show(plots.plot_thrust(df, turbine, output_file=None))
-    show(plots.plot_loads_by_stability(df, turbine, output_file=None))
+    show("plot_thrust", df, turbine)
+    show("plot_loads_by_stability", df, turbine)
