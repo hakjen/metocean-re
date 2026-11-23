@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metocean-re"
+description = "metocean-re - Tool for renewable energy analysis from metocean data"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.10"
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+download = ["metocean-api"]
+test = ["pytest"]
+app = ["streamlit", "streamlit-folium", "metocean-api"]
+
+[project.urls]
+Repository = "https://github.com/MET-OM/metocean-re"
+
+[tool.setuptools.packages.find]
+include = ["metocean_re*"]
+
+[tool.setuptools.package-data]
+metocean_re = ["stats/turbines.cfg"]

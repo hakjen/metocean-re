@@ -1,0 +1,11 @@
+name: metocean-re
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - pip
+  - setuptools
+  - numpy
+  - pandas
+  - matplotlib
+  - pytest

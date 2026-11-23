@@ -1,0 +1,19 @@
+venv/
+build/
+dist/
+*.egg-info/
+.vscode/
+*.eggs
+*__pycache__*
+.pytest_cache/
+outputs/
+data_raw/
+
+# macOS
+.DS_Store
+
+# metocean-api downloads (Streamlit app)
+cache/
+
+# Jupyter
+.ipynb_checkpoints/

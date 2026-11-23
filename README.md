@@ -2,3 +2,62 @@
 Python tool for renewable energy analysis from metocean data
 
 metocean-re is an open-source Python package for analysing renewable energy potential from metocean data. It turns time series of wind, waves, and currents (from hindcasts, reanalyses, or measurements) into energy-focused metrics: resource statistics, power production estimates using turbine and wave energy converter power curves/matrices, capacity factors, variability and intermittency, and combined wind–wave co-location analysis. It is designed to work alongside metocean-api for data retrieval and metocean-stats for general metocean statistics.
+
+## Installation
+
+```shell
+git clone https://github.com/MET-OM/metocean-re.git
+cd metocean-re
+pip install -e .
+```
+
+Run the tests with `pip install -e .[test]` and `pytest`.
+
+## Structure
+
+The package follows the structure of [metocean-stats](https://github.com/MET-OM/metocean-stats):
+
+| Module | Content |
+|---|---|
+| `metocean_re.stats` | calculations: wind over the rotor, atmospheric stability, turbulence, power production, energy losses, loads |
+| `metocean_re.stats.turbines` | turbine types (`turbines.cfg`), chosen by rated power or name |
+| `metocean_re.plots` | figures (`output_file=...`, return the figure) |
+| `metocean_re.tables` | tables (return a DataFrame, save as CSV) |
+
+## Example
+
+```python
+from metocean_re import plots, stats, tables
+from metocean_re.stats import turbines
+
+df = stats.read_metocean_csv("tests/data/NORA3_utsira_nord_2020_2022.csv")
+
+t = turbines.get(15)                                    # by rated power [MW] or name
+losses = stats.annual_energy_losses(df, t)
+tables.table_energy_production(df, [5, 10, 15])
+plots.plot_losses_by_stability(df, t)
+```
+
+See `examples/example_wind_energy.py` for the full workflow.
+
+## Web app
+
+The figures are also available in a small Streamlit app, where you can
+upload your own data or download a NORA3 point, choose or define a turbine
+and change the losses:
+
+```shell
+pip install -e .[app]
+streamlit run app/streamlit_app.py
+```
+
+## Data
+
+The functions use NORA3 column names as written by
+[metocean-api](https://github.com/MET-OM/metocean-api). The test dataset
+`tests/data/NORA3_utsira_nord_2020_2022.csv` (Utsira Nord, hourly 2020-2022)
+is made from NORA3 (MET Norway) with `examples/download_nora3.py` and
+`examples/build_dataset.py`.
+
+The sources for the formulas in `metocean_re/stats` and the references for the
+data are listed in [docs/references.md](docs/references.md).
