@@ -7,7 +7,7 @@ Run with (from the project root):
 
 The app only calls functions from the metocean_re package; all
 calculations and figures live there. The only code here is reading the
-data: the test dataset, an uploaded file or a NORA3 point from metocean-api.
+data: a ready-made site, an uploaded file or a NORA3 point from metocean-api.
 """
 
 import dataclasses
@@ -31,9 +31,17 @@ from metocean_re.stats import turbines
 st.set_page_config(page_title="Wind energy", layout="wide")
 title_area = st.empty()  # filled in when the turbine is known, so the title stays above the map
 
-# The test dataset (see examples/build_dataset.py)
-EXAMPLE_FILE = Path(__file__).resolve().parent.parent / "tests" / "data" / "NORA3_utsira_nord_2020_2022.csv"
-SITE = {"name": "Utsira Nord", "lat": 59.27, "lon": 4.54}
+# Ready-made sites: NORA3 2020-2022 at the mean of the corner points of each area in the royal decree
+# opening the areas (Kongelig resolusjon 12 June 2020). Made with examples/download_nora3.py and
+# examples/build_dataset.py; a site whose file is missing is left out.
+DATA_DIR = Path(__file__).resolve().parent.parent / "tests" / "data"
+PRESET_SITES = {
+    "Utsira Nord": {"lat": 59.27, "lon": 4.54, "file": DATA_DIR / "NORA3_utsira_nord_2020_2022.csv"},
+    "Sørlige Nordsjø II": {"lat": 56.75, "lon": 4.94, "file": DATA_DIR / "NORA3_sorlige_nordsjo_ii_2020_2022.csv"},
+}
+PRESET_SITES = {name: site for name, site in PRESET_SITES.items() if site["file"].exists()}
+EXAMPLE_SITE = "Utsira Nord"  # also the start point on the map and the example upload file
+UPLOAD, NORA3_POINT = "Upload file", "NORA3 point (metocean-api)"
 
 # Variables the calculations need at two heights or more, to find them at hub height and over the rotor
 # (see metocean_re/stats/aux_funcs.py for all columns)
@@ -46,9 +54,9 @@ REFERENCES_URL = "https://github.com/hakjen/metocean-re/blob/add-wind-energy/doc
 
 
 @st.cache_data
-def load_data(uploaded):
-    """The uploaded NORA3 CSV file (same format as the test dataset), or the test dataset."""
-    return stats.read_metocean_csv(uploaded if uploaded else EXAMPLE_FILE)
+def load_file(file):
+    """A ready-made site or an uploaded CSV file (same format as the test dataset)."""
+    return stats.read_metocean_csv(file)
 
 
 def download_seconds(months, waves=True):
@@ -197,7 +205,7 @@ EXAMPLE_COLUMNS = [f"{var}_{z}m" for var in ["wind_speed", "wind_direction"] for
     "sea_surface_temperature", "hs", "tp"]
 
 
-def show_file_format():
+def show_file_format(key):
     """What an uploaded file must look like, with a small example file to start from."""
     st.subheader("Upload your own data")
     st.markdown("A CSV file with one row per time step (e.g. hourly) and the columns below. "
@@ -205,98 +213,131 @@ def show_file_format():
                 "found at hub height and over the rotor; heights around the rotor give the best results. "
                 "Lines starting with `#` are skipped, so a description can be put at the top.")
     st.dataframe(FILE_COLUMNS, hide_index=True, width="stretch")
-    example = load_data(None).loc["2020-01", EXAMPLE_COLUMNS]
+    example = load_file(PRESET_SITES[EXAMPLE_SITE]["file"]).loc["2020-01", EXAMPLE_COLUMNS]
     st.download_button(
         "Example file (CSV)",
-        f"# NORA3 hindcast (MET Norway), {SITE['name']}, January 2020, only the columns the app needs\n"
+        f"# NORA3 hindcast (MET Norway), {EXAMPLE_SITE}, January 2020, only the columns the app needs\n"
         + example.to_csv(),
         file_name="example_upload.csv", mime="text/csv", icon=":material/download:", on_click="ignore",
-        help=f"One month from {SITE['name']}, to see the format or to fill in your own data.")
+        key=f"{key}_example", help=f"One month from {EXAMPLE_SITE}, to see the format or to fill in your own data.")
 
 
-# --- Sidebar: data, turbine and loss settings ------------------------------------
+def missing_columns(data):
+    """Columns the calculations need but the data lack (profile variables at two heights or more)."""
+    heights = {var: [c for c in data.columns if re.fullmatch(rf"{var}_\d+m", c)] for var in PROFILE_VARIABLES}
+    missing = [f"{var}_{{z}}m (found {', '.join(found) or 'none'})" for var, found in heights.items() if len(found) < 2]
+    return missing + ([] if "sea_surface_temperature" in data.columns else ["sea_surface_temperature"])
 
-st.sidebar.header("Data")
-source = st.sidebar.radio("Source", [f"NORA3, {SITE['name']}", "Upload file", "NORA3 point (metocean-api)"])
 
-if source == "Upload file":
-    uploaded = st.sidebar.file_uploader("Time series (CSV)", type=["csv"])
-    if not uploaded:
-        show_file_format()
-        st.stop()
-    try:
-        df = load_data(uploaded)
-    except ValueError as error:
-        st.error(f"Could not read the file: {error}")
-        show_file_format()
-        st.stop()
-elif source == "NORA3 point (metocean-api)":
+def choose_data(key, panel, main, default):
+    """
+    Widgets to choose the data of one site: a ready-made site, an uploaded file or a NORA3 point.
+
+    key     : prefix for the widget keys, so two sites can be chosen at once ("a", "b")
+    panel   : where the widgets go (the sidebar, or a column)
+    main    : where the map, messages and download progress go
+    default : the ready-made site chosen at the start
+
+    Returns a dict with data, name (for figures), file_name and note (for the CSV download),
+    or None while there are no data yet (the reason is shown in `main`).
+    """
+    options = list(PRESET_SITES) + [UPLOAD, NORA3_POINT]
+    source = panel.radio("Source", options, index=options.index(default), key=f"{key}_source")
+
+    if source in PRESET_SITES:
+        site = PRESET_SITES[source]
+        return dict(data=load_file(site["file"]), name=source, file_name=site["file"].stem,
+                    note=f"NORA3 hindcast (MET Norway), {source}, nearest grid point to {site['lat']} N {site['lon']} E")
+
+    if source == UPLOAD:
+        uploaded = panel.file_uploader("Time series (CSV)", type=["csv"], key=f"{key}_upload")
+        if not uploaded:
+            with main:
+                show_file_format(key)
+            return None
+        try:
+            data = load_file(uploaded)
+        except ValueError as error:
+            with main:
+                st.error(f"Could not read the file: {error}")
+                show_file_format(key)
+            return None
+        return dict(data=data, name=Path(uploaded.name).stem, file_name=Path(uploaded.name).stem,
+                    note=f"Uploaded file {uploaded.name}")
+
     import folium
     from streamlit_folium import st_folium
 
     # Clicking the map fills in latitude and longitude; they can still be typed in
-    st.session_state.setdefault("lat", SITE["lat"])
-    st.session_state.setdefault("lon", SITE["lon"])
-    with st.expander("Choose a point on the map", expanded="nora3_request" not in st.session_state):
-        point_map = folium.Map(location=[st.session_state["lat"], st.session_state["lon"]], zoom_start=5)
-        folium.Marker([st.session_state["lat"], st.session_state["lon"]], tooltip="Chosen point").add_to(point_map)
-        clicked = st_folium(point_map, height=420, use_container_width=True,
+    lat_key, lon_key, request_key, click_key = (f"{key}_{name}" for name in ("lat", "lon", "request", "click"))
+    st.session_state.setdefault(lat_key, PRESET_SITES[EXAMPLE_SITE]["lat"])
+    st.session_state.setdefault(lon_key, PRESET_SITES[EXAMPLE_SITE]["lon"])
+    with main.expander("Choose a point on the map", expanded=request_key not in st.session_state):
+        point_map = folium.Map(location=[st.session_state[lat_key], st.session_state[lon_key]], zoom_start=5)
+        folium.Marker([st.session_state[lat_key], st.session_state[lon_key]], tooltip="Chosen point").add_to(point_map)
+        clicked = st_folium(point_map, height=420, use_container_width=True, key=f"{key}_map",
                             returned_objects=["last_clicked"]).get("last_clicked")
     # st_folium keeps returning the last click, so only use a new one
-    if clicked and clicked != st.session_state.get("map_click"):
-        st.session_state["map_click"] = clicked
-        st.session_state["lat"] = round(min(max(clicked["lat"], 50.0), 80.0), 2)
-        st.session_state["lon"] = round(min(max(clicked["lng"], -20.0), 40.0), 2)
+    if clicked and clicked != st.session_state.get(click_key):
+        st.session_state[click_key] = clicked
+        st.session_state[lat_key] = round(min(max(clicked["lat"], 50.0), 80.0), 2)
+        st.session_state[lon_key] = round(min(max(clicked["lng"], -20.0), 40.0), 2)
         st.rerun()
 
-    lat = st.sidebar.number_input("Latitude", 50.0, 80.0, step=0.1, key="lat")
-    lon = st.sidebar.number_input("Longitude", -20.0, 40.0, step=0.1, key="lon")
-    start = st.sidebar.date_input("From", pd.Timestamp("2020-01-01"), format="YYYY-MM-DD")
-    end = st.sidebar.date_input("To", pd.Timestamp("2020-12-31"), format="YYYY-MM-DD")
-    waves = st.sidebar.checkbox("Include waves", value=True)
+    lat = panel.number_input("Latitude", 50.0, 80.0, step=0.1, key=lat_key)
+    lon = panel.number_input("Longitude", -20.0, 40.0, step=0.1, key=lon_key)
+    start = panel.date_input("From", pd.Timestamp("2020-01-01"), format="YYYY-MM-DD", key=f"{key}_from")
+    end = panel.date_input("To", pd.Timestamp("2020-12-31"), format="YYYY-MM-DD", key=f"{key}_to")
+    waves = panel.checkbox("Include waves", value=True, key=f"{key}_waves")
     if end < start:
-        st.sidebar.error("'To' must be after 'From'.")
-        st.stop()
+        panel.error("'To' must be after 'From'.")
+        return None
     months = (end.year - start.year) * 12 + end.month - start.month + 1
-    st.sidebar.caption(
+    panel.caption(
         f"Rough download time: {max(download_seconds(months, waves) / 60, 1):.0f} min. "
         "A point already downloaded takes about 1 min (metocean-api still looks up the grid point), "
         "and is instant later in the same session."
     )
     # Only download when the button is pressed, not on every change of the inputs
-    if st.sidebar.button("Download"):
-        st.session_state["nora3_request"] = (lon, lat, start, end, waves)
-    request = st.session_state.get("nora3_request")
+    if panel.button("Download", key=f"{key}_download"):
+        st.session_state[request_key] = (lon, lat, start, end, waves)
+    request = st.session_state.get(request_key)
     if request is None:
-        st.info("Click on the map or type a point in the sidebar, choose a period, then press Download.")
-        st.stop()
+        main.info("Click on the map or type a point, choose a period, then press Download.")
+        return None
     if request != (lon, lat, start, end, waves):
-        st.sidebar.warning("Settings changed: press Download to get data for them.")
-    # Downloaded data are kept for the session, so moving a slider does not download again
+        panel.warning("Settings changed: press Download to get data for them.")
+    # Downloaded data are kept for the session (shared by both sites), so moving a slider does not download again
     downloaded = st.session_state.setdefault("nora3_data", {})
     if request not in downloaded:
-        bar = st.progress(0.0, "Connecting to MET Norway ...")
+        bar = main.progress(0.0, "Connecting to MET Norway ...")
         try:
             downloaded[request] = load_nora3(*request, progress=bar.progress)
         except Exception as error:
-            st.error(f"Download from MET Norway failed: {error}. Try again, or try without waves.")
-            st.stop()
+            main.error(f"Download from MET Norway failed: {error}. Try again, or try without waves.")
+            return None
         bar.empty()
-    df = downloaded[request]
-else:
-    df = load_data(None)
+    lon, lat, start, end, _ = request
+    return dict(data=downloaded[request], name=f"{lat:.2f} N {lon:.2f} E",
+                file_name=f"NORA3_{lat:.2f}N_{lon:.2f}E_{start:%Y%m%d}_{end:%Y%m%d}",
+                note=f"NORA3 hindcast (MET Norway), nearest grid point to {lat:.2f} N {lon:.2f} E, "
+                     "downloaded with metocean-api")
 
-st.sidebar.caption(
-    f"{source}: {df.index[0]:%Y-%m-%d} to {df.index[-1]:%Y-%m-%d}, {len(df)} time steps"
-)
-heights = {var: [c for c in df.columns if re.fullmatch(rf"{var}_\d+m", c)] for var in PROFILE_VARIABLES}
-missing = [f"{var}_{{z}}m (found {', '.join(found) or 'none'})" for var, found in heights.items() if len(found) < 2]
-missing += [] if "sea_surface_temperature" in df.columns else ["sea_surface_temperature"]
+
+# --- Sidebar: data, turbine and loss settings ------------------------------------
+
+st.sidebar.header("Data")
+site_a = choose_data("a", st.sidebar, st.container(), EXAMPLE_SITE)
+if site_a is None:
+    st.stop()
+df = site_a["data"]
+st.sidebar.caption(f"{site_a['name']}: {df.index[0]:%Y-%m-%d} to {df.index[-1]:%Y-%m-%d}, {len(df)} time steps")
+missing = missing_columns(df)
 if missing:
     st.error("The data is missing columns. Need these at two heights or more, e.g. density_50m and "
              f"density_100m: {', '.join(missing)}")
-    if source == "Upload file":
-        show_file_format()
+    if st.session_state["a_source"] == UPLOAD:
+        show_file_format("a")
     st.stop()
 has_waves = {"hs", "tp"} <= set(df.columns)
 
@@ -352,16 +393,9 @@ st.sidebar.caption("Hover over ? for where a default value comes from. "
                    f"All sources and assumptions: [docs/references.md]({REFERENCES_URL})")
 
 st.sidebar.header("Download")
-if source == "NORA3 point (metocean-api)":
-    lon, lat, start, end, _ = request
-    data_name, data_note = f"NORA3_{lat:.2f}N_{lon:.2f}E_{start:%Y%m%d}_{end:%Y%m%d}", (
-        f"NORA3 hindcast (MET Norway), nearest grid point to {lat:.2f} N {lon:.2f} E, downloaded with metocean-api")
-elif source == "Upload file":
-    data_name, data_note = Path(uploaded.name).stem, f"Uploaded file {uploaded.name}"
-else:
-    data_name, data_note = EXAMPLE_FILE.stem, f"NORA3 hindcast (MET Norway), {SITE['name']}"
 st.sidebar.download_button(
-    "Data (CSV)", lambda: f"# {data_note}\n" + df.to_csv(), file_name=f"{data_name}.csv", mime="text/csv",
+    "Data (CSV)", lambda: f"# {site_a['note']}\n" + df.to_csv(), file_name=f"{site_a['file_name']}.csv",
+    mime="text/csv",
     icon=":material/download:", on_click="ignore", width="stretch",
     help="The time series used in the figures. Can be uploaded again with 'Upload file'.")
 
@@ -384,7 +418,7 @@ def tables_zip():
 
 
 st.sidebar.download_button(
-    "Tables (ZIP)", tables_zip, file_name=f"wind_energy_tables_{data_name}.zip", mime="application/zip",
+    "Tables (ZIP)", tables_zip, file_name=f"wind_energy_tables_{site_a['file_name']}.zip", mime="application/zip",
     icon=":material/download:", on_click="ignore", width="stretch",
     help="Energy production for all turbines, the losses and the stability classes as CSV files, "
          "with the turbine and losses chosen above.")
