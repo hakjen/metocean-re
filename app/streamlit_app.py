@@ -49,8 +49,13 @@ PROFILE_VARIABLES = ["wind_speed", "wind_direction", "air_temperature", "relativ
 WAVE_COLUMNS = ["hs", "tp", "hs_sea", "tp_sea", "hs_swell", "tp_swell"]
 ATM3HR_PREFIXES = ("air_temperature_", "relative_humidity_", "density_", "tke_")
 
-# All sources and assumptions behind the calculations
-REFERENCES_URL = "https://github.com/hakjen/metocean-re/blob/add-wind-energy/docs/references.md"
+# All sources and assumptions behind the calculations, shown inside the app so the link always works
+REFERENCES_FILE = Path(__file__).resolve().parent.parent / "docs" / "references.md"
+
+
+@st.dialog("Sources and assumptions", width="large")
+def show_references():
+    st.markdown(REFERENCES_FILE.read_text(encoding="utf-8"))
 
 
 @st.cache_data
@@ -436,8 +441,9 @@ loss_options = dict(
 if not has_waves:
     st.sidebar.caption("No hs/tp columns in the data" + (" of one of the sites" if len(sites) > 1 else "")
                        + ", so the wave-dependent losses are left out.")
-st.sidebar.caption("Hover over ? for where a default value comes from. "
-                   f"All sources and assumptions: [docs/references.md]({REFERENCES_URL})")
+st.sidebar.caption("Hover over ? for where a default value comes from.")
+if st.sidebar.button("All sources and assumptions", icon=":material/menu_book:", width="stretch"):
+    show_references()
 
 st.sidebar.header("Download")
 if mode == COMPARE:
