@@ -12,6 +12,7 @@ data: a ready-made site, an uploaded file or a NORA3 point from metocean-api.
 
 import dataclasses
 import io
+import json
 import re
 import zipfile
 from contextlib import contextmanager
@@ -49,6 +50,15 @@ PROFILE_VARIABLES = ["wind_speed", "wind_direction", "air_temperature", "relativ
 WAVE_COLUMNS = ["hs", "tp", "hs_sea", "tp_sea", "hs_swell", "tp_swell"]
 ATM3HR_PREFIXES = ("air_temperature_", "relative_humidity_", "density_", "tke_")
 
+# Offshore wind areas from NVE (licence NLOD), drawn on the NORA3 map.
+# Made with examples/download_offshore_wind_areas.py; the map works without them if the file is missing.
+AREAS_FILE = Path(__file__).resolve().parent / "data" / "offshore_wind_areas.geojson"
+AREA_STYLES = {  # category: (colour, dashes)
+    "Opened area": ("#1f6fd1", None),
+    "Awarded project area": ("#e8741e", None),
+    "Assessment area 2023": ("#6b6a66", "5 5"),
+}
+
 # All sources and assumptions behind the calculations, shown inside the app so the link always works
 REFERENCES_FILE = Path(__file__).resolve().parent.parent / "docs" / "references.md"
 
@@ -56,6 +66,59 @@ REFERENCES_FILE = Path(__file__).resolve().parent.parent / "docs" / "references.
 @st.dialog("Sources and assumptions", width="large")
 def show_references():
     st.markdown(REFERENCES_FILE.read_text(encoding="utf-8"))
+
+
+@st.cache_data
+def offshore_wind_areas():
+    """The NVE offshore wind areas as GeoJSON features (an empty list if the file is missing)."""
+    if not AREAS_FILE.exists():
+        return []
+    return json.loads(AREAS_FILE.read_text(encoding="utf-8"))["features"]
+
+
+def inside(lon, lat, ring):
+    """True if the point is inside the polygon ring [[lon, lat], ...] (ray casting)."""
+    result = False
+    for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]):
+        if (y1 > lat) != (y2 > lat) and lon < x1 + (lat - y1) * (x2 - x1) / (y2 - y1):
+            result = not result
+    return result
+
+
+def areas_at(lon, lat):
+    """The NVE areas that contain the point, e.g. ['Utsira Nord (opened area, awarded project area)']."""
+    found = {}  # name: categories
+    for feature in offshore_wind_areas():
+        geometry = feature["geometry"]
+        polygons = [geometry["coordinates"]] if geometry["type"] == "Polygon" else geometry["coordinates"]
+        # A point is in a polygon if it is inside the outer ring and not inside a hole
+        if any(inside(lon, lat, poly[0]) and not any(inside(lon, lat, hole) for hole in poly[1:]) for poly in polygons):
+            category = feature["properties"]["category"]
+            categories = found.setdefault(feature["properties"]["name"], [])
+            if category[0].lower() + category[1:] not in categories:
+                categories.append(category[0].lower() + category[1:])
+    return [f"{name} ({', '.join(categories)})" for name, categories in found.items()]
+
+
+def add_offshore_wind_areas(point_map):
+    """Draw the NVE areas on a folium map, one layer per category that can be switched on and off."""
+    import folium
+
+    features = offshore_wind_areas()
+    for category, (colour, dashes) in AREA_STYLES.items():
+        chosen = [f for f in features if f["properties"]["category"] == category]
+        if not chosen:
+            continue
+        folium.GeoJson(
+            {"type": "FeatureCollection", "features": chosen},
+            name=category,
+            style_function=lambda _, colour=colour, dashes=dashes: {
+                "color": colour, "weight": 2, "dashArray": dashes, "fillColor": colour, "fillOpacity": 0.15},
+            tooltip=folium.GeoJsonTooltip(["name", "category", "technology", "area_km2"],
+                                          aliases=["Area", "Status", "Technology", "Size [km²]"]),
+        ).add_to(point_map)
+    if features:
+        folium.LayerControl(collapsed=False).add_to(point_map)
 
 
 @st.cache_data
@@ -299,10 +362,16 @@ def choose_data(key, panel, main, default):
     st.session_state.setdefault(lat_key, PRESET_SITES[EXAMPLE_SITE]["lat"])
     st.session_state.setdefault(lon_key, PRESET_SITES[EXAMPLE_SITE]["lon"])
     with main.expander("Choose a point on the map", expanded=request_key not in st.session_state):
-        point_map = folium.Map(location=[st.session_state[lat_key], st.session_state[lon_key]], zoom_start=5)
+        point_map = folium.Map(location=[st.session_state[lat_key], st.session_state[lon_key]], zoom_start=5, tiles=None)
+        folium.TileLayer("OpenStreetMap", control=False).add_to(point_map)  # background map, not in the layer list
+        add_offshore_wind_areas(point_map)
         folium.Marker([st.session_state[lat_key], st.session_state[lon_key]], tooltip="Chosen point").add_to(point_map)
         clicked = st_folium(point_map, height=420, use_container_width=True, key=f"{key}_map",
                             returned_objects=["last_clicked"]).get("last_clicked")
+        if offshore_wind_areas():
+            st.caption("Blue: areas opened for offshore wind. Orange: project areas awarded so far. "
+                       "Grey, dashed: areas NVE identified in 2023 for further assessment. "
+                       "Hover over an area for its name. Areas from NVE (HavvindOnline), licence NLOD.")
     # st_folium keeps returning the last click, so only use a new one
     if clicked and clicked != st.session_state.get(click_key):
         st.session_state[click_key] = clicked
@@ -312,6 +381,10 @@ def choose_data(key, panel, main, default):
 
     lat = panel.number_input("Latitude", 50.0, 80.0, step=0.1, key=lat_key)
     lon = panel.number_input("Longitude", -20.0, 40.0, step=0.1, key=lon_key)
+    if offshore_wind_areas():
+        found = areas_at(lon, lat)
+        panel.caption("The point is in " + " and in ".join(found) + "." if found
+                      else "The point is outside the offshore wind areas on the map.")
     start = panel.date_input("From", pd.Timestamp("2020-01-01"), format="YYYY-MM-DD", key=f"{key}_from")
     end = panel.date_input("To", pd.Timestamp("2020-12-31"), format="YYYY-MM-DD", key=f"{key}_to")
     waves = panel.checkbox("Include waves", value=True, key=f"{key}_waves")
