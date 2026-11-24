@@ -11,6 +11,7 @@ data: a ready-made site, an uploaded file or a NORA3 point from metocean-api.
 """
 
 import dataclasses
+import datetime
 import io
 import json
 import re
@@ -119,6 +120,52 @@ def add_offshore_wind_areas(point_map):
         ).add_to(point_map)
     if features:
         folium.LayerControl(collapsed=False).add_to(point_map)
+
+
+# --- Settings in the address (URL) ------------------------------------------------
+# Each setting that differs from its default is written to the address, e.g.
+# http://localhost:8501/?mode=Compare+two+sites&turbine=NREL-5MW, so a copied link opens the app
+# with the same settings. Settings that are left out, or not valid, get their default value.
+
+URL_DEFAULTS = {}  # widget key: default value, for the settings shown in this run
+
+
+def from_url(key, default, low=None, high=None, options=None):
+    """The value of a setting from the address, or the default. Also registers the setting for update_url()."""
+    URL_DEFAULTS[key] = default
+    text = st.query_params.get(key)
+    if text is None:
+        return default
+    try:
+        if isinstance(default, bool):
+            value = {"true": True, "false": False}[text.lower()]
+        elif isinstance(default, datetime.date):
+            value = datetime.date.fromisoformat(text)
+        else:
+            value = type(default)(text)
+    except (ValueError, KeyError):
+        return default
+    if options is not None and value not in options:
+        return default
+    if (low is not None and value < low) or (high is not None and value > high):
+        return default
+    return value
+
+
+def update_url(partial=False):
+    """
+    Write the settings that differ from their default to the address.
+
+    partial: the app stopped before all settings were shown (e.g. while waiting for data), so the
+    settings not shown yet are kept as they are in the address.
+    """
+    params = {key: value for key, value in st.query_params.items() if partial and key not in URL_DEFAULTS}
+    for key, default in URL_DEFAULTS.items():
+        value = st.session_state.get(key, default)
+        if value != default:
+            params[key] = str(value).lower() if isinstance(value, bool) else str(value)
+    if params != st.query_params.to_dict():
+        st.query_params.from_dict(params)
 
 
 @st.cache_data
@@ -331,7 +378,8 @@ def choose_data(key, panel, main, default):
     or None while there are no data yet (the reason is shown in `main`).
     """
     options = list(PRESET_SITES) + [UPLOAD, NORA3_POINT]
-    source = panel.radio("Source", options, index=options.index(default), key=f"{key}_source")
+    source = panel.radio("Source", options, key=f"{key}_source",
+                         index=options.index(from_url(f"{key}_source", default, options=options)))
 
     if source in PRESET_SITES:
         site = PRESET_SITES[source]
@@ -359,8 +407,8 @@ def choose_data(key, panel, main, default):
 
     # Clicking the map fills in latitude and longitude; they can still be typed in
     lat_key, lon_key, request_key, click_key = (f"{key}_{name}" for name in ("lat", "lon", "request", "click"))
-    st.session_state.setdefault(lat_key, PRESET_SITES[EXAMPLE_SITE]["lat"])
-    st.session_state.setdefault(lon_key, PRESET_SITES[EXAMPLE_SITE]["lon"])
+    st.session_state.setdefault(lat_key, from_url(lat_key, PRESET_SITES[EXAMPLE_SITE]["lat"], 50.0, 80.0))
+    st.session_state.setdefault(lon_key, from_url(lon_key, PRESET_SITES[EXAMPLE_SITE]["lon"], -20.0, 40.0))
     with main.expander("Choose a point on the map", expanded=request_key not in st.session_state):
         point_map = folium.Map(location=[st.session_state[lat_key], st.session_state[lon_key]], zoom_start=5, tiles=None)
         folium.TileLayer("OpenStreetMap", control=False).add_to(point_map)  # background map, not in the layer list
@@ -385,9 +433,11 @@ def choose_data(key, panel, main, default):
         found = areas_at(lon, lat)
         panel.caption("The point is in " + " and in ".join(found) + "." if found
                       else "The point is outside the offshore wind areas on the map.")
-    start = panel.date_input("From", pd.Timestamp("2020-01-01"), format="YYYY-MM-DD", key=f"{key}_from")
-    end = panel.date_input("To", pd.Timestamp("2020-12-31"), format="YYYY-MM-DD", key=f"{key}_to")
-    waves = panel.checkbox("Include waves", value=True, key=f"{key}_waves")
+    start = panel.date_input("From", from_url(f"{key}_from", datetime.date(2020, 1, 1)), format="YYYY-MM-DD",
+                             key=f"{key}_from")
+    end = panel.date_input("To", from_url(f"{key}_to", datetime.date(2020, 12, 31)), format="YYYY-MM-DD",
+                           key=f"{key}_to")
+    waves = panel.checkbox("Include waves", value=from_url(f"{key}_waves", True), key=f"{key}_waves")
     if end < start:
         panel.error("'To' must be after 'From'.")
         return None
@@ -427,6 +477,7 @@ def choose_data(key, panel, main, default):
 
 ONE_SITE, COMPARE = "One site", "Compare two sites"
 mode = st.sidebar.radio("View", [ONE_SITE, COMPARE], horizontal=True, key="mode",
+                        index=[ONE_SITE, COMPARE].index(from_url("mode", ONE_SITE, options=[ONE_SITE, COMPARE])),
                         help="Compare two sites: the same turbine and losses at site A and site B.")
 data_messages = st.container()  # map, upload help and download progress, above the results
 
@@ -436,6 +487,7 @@ def checked_site(key, header, default):
     st.sidebar.header(header)
     site = choose_data(key, st.sidebar, data_messages, default)
     if site is None:
+        update_url(partial=True)
         st.stop()
     data = site["data"]
     st.sidebar.caption(f"{data.index[0]:%Y-%m-%d} to {data.index[-1]:%Y-%m-%d}, {len(data)} time steps")
@@ -446,6 +498,7 @@ def checked_site(key, header, default):
         if st.session_state[f"{key}_source"] == UPLOAD:
             with data_messages:
                 show_file_format(key)
+        update_url(partial=True)
         st.stop()
     return site
 
@@ -466,50 +519,72 @@ df = site_a["data"]
 has_waves = all({"hs", "tp"} <= set(site["data"].columns) for site in sites)
 
 st.sidebar.header("Turbine")
-choice = st.sidebar.selectbox("Turbine", turbines.names() + ["Custom"], index=turbines.names().index("IEA-15MW"))
+turbine_options = turbines.names() + ["Custom"]
+choice = st.sidebar.selectbox("Turbine", turbine_options, key="turbine",
+                              index=turbine_options.index(from_url("turbine", "IEA-15MW", options=turbine_options)))
+
+
+def url_number(label, key, low, high, default):
+    """A number input in the sidebar whose value is kept in the address."""
+    return st.sidebar.number_input(label, low, high, from_url(key, default, low, high), key=key)
+
+
 if choice == "Custom":
     turbine = turbines.Turbine(
-        name=st.sidebar.text_input("Name", "My turbine"),
-        rated_power=st.sidebar.number_input("Rated power [MW]", 0.5, 30.0, 12.0),
-        cut_in=st.sidebar.number_input("Cut-in [m/s]", 0.0, 10.0, 3.0),
-        rated_speed=st.sidebar.number_input("Rated speed [m/s]", 5.0, 20.0, 11.0),
-        cut_out=st.sidebar.number_input("Cut-out [m/s]", 15.0, 40.0, 25.0),
-        hub_height=st.sidebar.number_input("Hub height [m]", 20.0, 300.0, 140.0),
-        rotor_diameter=st.sidebar.number_input("Rotor diameter [m]", 20.0, 350.0, 220.0),
+        name=st.sidebar.text_input("Name", from_url("name", "My turbine"), key="name"),
+        rated_power=url_number("Rated power [MW]", "rated_power", 0.5, 30.0, 12.0),
+        cut_in=url_number("Cut-in [m/s]", "cut_in", 0.0, 10.0, 3.0),
+        rated_speed=url_number("Rated speed [m/s]", "rated_speed", 5.0, 20.0, 11.0),
+        cut_out=url_number("Cut-out [m/s]", "cut_out", 15.0, 40.0, 25.0),
+        hub_height=url_number("Hub height [m]", "hub_height", 20.0, 300.0, 140.0),
+        rotor_diameter=url_number("Rotor diameter [m]", "rotor_diameter", 20.0, 350.0, 220.0),
     )
     if not turbine.cut_in < turbine.rated_speed < turbine.cut_out:
         st.sidebar.error("Need cut-in < rated speed < cut-out.")
+        update_url(partial=True)
         st.stop()
 else:
     turbine = turbines.get(choice)
 
 st.sidebar.header("Losses")
-maintenance = st.sidebar.radio("Maintenance", ["weather", "fixed"], horizontal=True,
-                               index=0 if has_waves else 1, disabled=not has_waves)
+
+
+def url_slider(label, key, low, high, default, step, help):
+    """A slider in the sidebar whose value is kept in the address."""
+    return st.sidebar.slider(label, low, high, from_url(key, default, low, high), step, key=key, help=help)
+
+
+if has_waves:
+    maintenance = st.sidebar.radio("Maintenance", ["weather", "fixed"], horizontal=True, key="maintenance",
+                                   index=["weather", "fixed"].index(
+                                       from_url("maintenance", "weather", options=["weather", "fixed"])))
+else:  # weather-dependent maintenance needs waves; a separate key so the choice comes back with waves
+    maintenance = st.sidebar.radio("Maintenance", ["weather", "fixed"], horizontal=True, index=1, disabled=True,
+                                   key="maintenance_no_waves")
 if maintenance == "weather":
     maintenance_options = dict(
-        hs_limit=st.sidebar.slider("Wave height limit for access, Hs [m]", 1.0, 4.0, 2.0, 0.25,
-                                   help="Own assumption (no source). The loss depends strongly on this limit."),
-        failures_per_year=st.sidebar.slider("Failures per year", 1.0, 15.0, 8.3, 0.1,
-                                            help="8.3 per turbine per year: Carroll et al. (2016), Wind Energy 19."),
-        repair_hours=st.sidebar.slider("Repair time [hours]", 2, 48, 12,
-                                       help="12 h: mean repair time weighted by failure rate, Carroll et al. (2016). "
-                                            "Excludes travel and waiting for access."),
+        hs_limit=url_slider("Wave height limit for access, Hs [m]", "hs_limit", 1.0, 4.0, 2.0, 0.25,
+                            help="Own assumption (no source). The loss depends strongly on this limit."),
+        failures_per_year=url_slider("Failures per year", "failures_per_year", 1.0, 15.0, 8.3, 0.1,
+                                     help="8.3 per turbine per year: Carroll et al. (2016), Wind Energy 19."),
+        repair_hours=url_slider("Repair time [hours]", "repair_hours", 2, 48, 12, 1,
+                                help="12 h: mean repair time weighted by failure rate, Carroll et al. (2016). "
+                                     "Excludes travel and waiting for access."),
     )
 else:
-    maintenance_options = dict(downtime_days=st.sidebar.slider("Maintenance [days/year]", 0, 60, 14,
-                                                                 help="Own assumption, agreed with supervisor (MET)."))
+    maintenance_options = dict(downtime_days=url_slider("Maintenance [days/year]", "downtime_days", 0, 60, 14, 1,
+                                                        help="Own assumption, agreed with supervisor (MET)."))
 loss_options = dict(
     maintenance=maintenance,
     **maintenance_options,
-    electrical=st.sidebar.slider("Electrical loss [%]", 0.0, 10.0, 2.0, 0.5,
-                                 help="Own assumption (no source). Typical values are 1-3 %.") / 100,
-    restart_speed=st.sidebar.slider("Restart after storm stop [m/s]", 15.0, 25.0, 20.0, 0.5,
-                                    help="Own assumption (no source). Typical value, not from a specific turbine."),
-    tilt_angle=st.sidebar.slider("Constant tilt [deg]", 0.0, 15.0, 5.0, 0.5,
-                                 help="Own assumption (no source). Scenario choice."),
-    wave_response=st.sidebar.slider("Wave response (0 = off)", 0.0, 1.0, 1.0, 0.1,
-                                    help="Own assumption (no source). 1.0 is a deliberate upper limit.") if has_waves else 0.0,
+    electrical=url_slider("Electrical loss [%]", "electrical", 0.0, 10.0, 2.0, 0.5,
+                          help="Own assumption (no source). Typical values are 1-3 %.") / 100,
+    restart_speed=url_slider("Restart after storm stop [m/s]", "restart_speed", 15.0, 25.0, 20.0, 0.5,
+                             help="Own assumption (no source). Typical value, not from a specific turbine."),
+    tilt_angle=url_slider("Constant tilt [deg]", "tilt_angle", 0.0, 15.0, 5.0, 0.5,
+                          help="Own assumption (no source). Scenario choice."),
+    wave_response=url_slider("Wave response (0 = off)", "wave_response", 0.0, 1.0, 1.0, 0.1,
+                             help="Own assumption (no source). 1.0 is a deliberate upper limit.") if has_waves else 0.0,
 )
 if not has_waves:
     st.sidebar.caption("No hs/tp columns in the data" + (" of one of the sites" if len(sites) > 1 else "")
@@ -517,6 +592,10 @@ if not has_waves:
 st.sidebar.caption("Hover over ? for where a default value comes from.")
 if st.sidebar.button("All sources and assumptions", icon=":material/menu_book:", width="stretch"):
     show_references()
+
+update_url()
+st.sidebar.caption("The address in the browser keeps these settings: copy it to share them or come back to them. "
+                   "Uploaded files are not included, and a NORA3 point is downloaded again when you press Download.")
 
 st.sidebar.header("Download")
 if mode == COMPARE:
