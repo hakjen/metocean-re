@@ -284,9 +284,61 @@ def figure_png(name, *args, **kwargs):
     return buffer.getvalue()
 
 
+# Short explanations under the figures, shown with the switch "Show explanations" (e.g. for teaching).
+# Drafts: to be checked before they are used in teaching.
+EXPLANATIONS = {
+    "plot_wind_profile": """
+**What it shows.** Left: the mean wind speed at each NORA3 height (dots) and the power law between them
+(line). The grey band is the rotor. Right: how often each shear exponent α across the rotor occurs.
+
+**What to notice.** The wind gets stronger with height, fastest close to the sea surface. α tells how
+steep the profile is, u(z) = u₁ (z / z₁)^α: the larger α, the larger the difference between the top and
+the bottom of the rotor. A negative α means weaker wind at the top than at the bottom.
+""",
+    "plot_wind_shear_explained": """
+**What it shows.** The hours are grouped by the shear exponent α. Left: how often each group occurs.
+Middle: the mean difference in wind speed between the top and the bottom of the rotor. Right: how much
+the energy changes when the wind over the whole rotor (the rotor-equivalent wind speed, REWS) is used
+instead of only the wind at the hub.
+
+**What to notice.** The difference over the rotor is large, but the effect on energy is small. The
+stronger wind above the hub and the weaker wind below it nearly cancel, so the hub-height wind is a good
+first estimate.
+""",
+    "plot_wind_and_energy_distribution": """
+**What it shows.** Top: the share of time at each wind speed at hub height, with a fitted Weibull
+distribution (k: the shape, higher means a steadier wind; c: the scale, a bit above the mean wind speed).
+Bottom: the share of the energy that is produced at each wind speed.
+
+**What to notice.** The energy comes from higher wind speeds than the most common ones, because the power
+rises steeply with wind speed up to rated speed (dashed line). Above rated speed the turbine gives full
+power, and above cut-out it stops (grey).
+""",
+    "plot_turbulence_intensity": """
+**What it shows.** Turbulence intensity TI = σ_u / U, how much the wind varies around its mean, at hub
+height against the wind speed. Here σ_u is estimated from the turbulent kinetic energy (TKE) in NORA3.
+The dashed lines are the IEC 61400-1 normal turbulence model for the turbine classes A, B and C, the
+90 % quantile a turbine is designed for.
+
+**What to notice.** Compare the 90 % quantile (violet) with the IEC lines: below the line of a class means
+the site has less turbulence than that class is designed for. TI is highest at low wind speeds.
+""",
+    "plot_turbulence_power_curve": """
+**What it shows.** The power curve of the turbine when the wind varies around its mean (turbulence),
+for three turbulence intensities. It only depends on the turbine, not on the data.
+
+**What to notice.** Just above cut-in the gusts give extra power, so turbulence raises the curve. Near
+rated speed the gusts above rated cannot give more than full power, while the lulls give less, so
+turbulence lowers the curve. The more turbulence, the larger both effects.
+""",
+}
+
+
 def show(name, *args, **kwargs):
-    """Show a figure from metocean_re.plots, e.g. show("plot_thrust", df, turbine)."""
+    """Show a figure from metocean_re.plots, e.g. show("plot_thrust", df, turbine), with its explanation if on."""
     st.image(figure_png(name, *args, **kwargs), width="stretch")
+    if st.session_state.get("explain") and name in EXPLANATIONS:
+        st.info(EXPLANATIONS[name], icon=":material/school:")
 
 
 @st.cache_data(show_spinner=False, max_entries=100, hash_funcs=CACHE_HASHES)
@@ -479,6 +531,9 @@ ONE_SITE, COMPARE = "One site", "Compare two sites"
 mode = st.sidebar.radio("View", [ONE_SITE, COMPARE], horizontal=True, key="mode",
                         index=[ONE_SITE, COMPARE].index(from_url("mode", ONE_SITE, options=[ONE_SITE, COMPARE])),
                         help="Compare two sites: the same turbine and losses at site A and site B.")
+st.sidebar.toggle("Show explanations", key="explain", value=from_url("explain", False),
+                  help="A short text under the figures on what they show and what to notice. "
+                       "So far only in the Wind tab.")
 data_messages = st.container()  # map, upload help and download progress, above the results
 
 
